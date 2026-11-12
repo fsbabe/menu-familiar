@@ -1,0 +1,1251 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1E6B57">
+<title>Menú Familiar</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: pizarra semanal — una fila por día, columnas Cole · Comida · Merienda · Cena; en móvil, tarjetas apiladas */
+:root{
+  --bg:#F2F4EF; --surface:#FFFFFF; --surface-2:#E8ECE4; --ink:#1C2620; --muted:#5E6B62; --line:#D3DACF;
+  --accent:#1E6B57; --accent-ink:#FFFFFF; --accent-soft:#D7EAE2;
+  --p-carne:#B0482F; --p-pblanco:#3C7FA8; --p-pazul:#22446E; --p-huevo:#C9940E; --p-legumbre:#7A5737; --p-ninguna:#8A958C;
+  --ok:#2E7D4F; --warn:#B26A00; --bad:#B3261E; --ok-soft:#DCEFE2; --warn-soft:#F8E8CC; --bad-soft:#F6D9D6;
+  --f-display:"Young Serif", Georgia, "Times New Roman", serif;
+  --f-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141A16; --surface:#1C2420; --surface-2:#242E28; --ink:#E6ECE6; --muted:#9AA79E; --line:#34413A;
+  --accent:#5BC2A2; --accent-ink:#0E1A15; --accent-soft:#1F3A31;
+  --p-carne:#E07A5F; --p-pblanco:#74B3DB; --p-pazul:#8FA9E0; --p-huevo:#E8C04A; --p-legumbre:#C49A6C; --p-ninguna:#8A958C;
+  --ok:#6FCF97; --warn:#F2B04C; --bad:#F28B82; --ok-soft:#1E3A2A; --warn-soft:#3D2E14; --bad-soft:#42201D;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141A16; --surface:#1C2420; --surface-2:#242E28; --ink:#E6ECE6; --muted:#9AA79E; --line:#34413A;
+  --accent:#5BC2A2; --accent-ink:#0E1A15; --accent-soft:#1F3A31;
+  --p-carne:#E07A5F; --p-pblanco:#74B3DB; --p-pazul:#8FA9E0; --p-huevo:#E8C04A; --p-legumbre:#C49A6C; --p-ninguna:#8A958C;
+  --ok:#6FCF97; --warn:#F2B04C; --bad:#F28B82; --ok-soft:#1E3A2A; --warn-soft:#3D2E14; --bad-soft:#42201D;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:1240px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* header */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);padding-block:14px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.brand h1{font-size:26px}
+.brand .who{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tabs{display:flex;gap:2px;background:var(--surface-2);padding:3px;border-radius:999px;overflow-x:auto;max-width:100%}
+.tabs button{border:0;background:transparent;padding:6px 14px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0 / .12)}
+.weeknav{display:flex;align-items:center;gap:4px;margin-left:auto}
+.weeknav .lbl{font-weight:600;min-width:13.5em;text-align:center;font-size:14px}
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:8px;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.sm{padding:4px 8px;font-size:13px}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+.icon{width:30px;height:30px;justify-content:center;padding:0}
+
+.notice{margin-top:14px;padding:10px 14px;border-radius:var(--r);background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.notice.info{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.notice .grow{flex:1;min-width:200px}
+
+/* balance */
+.balance{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.balance .t{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-right:4px}
+.bchip{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 8px;font-size:13px}
+.bchip b{font-family:var(--f-mono);font-weight:500}
+.bchip .st{font-size:11px;padding:1px 7px;border-radius:999px;font-weight:600}
+.st.ok{background:var(--ok-soft);color:var(--ok)}.st.warn{background:var(--warn-soft);color:var(--warn)}.st.bad{background:var(--bad-soft);color:var(--bad)}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
+
+/* week grid */
+.grid{margin-top:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.ghead,.row{display:grid;grid-template-columns:88px minmax(0,1fr) minmax(0,1.15fr) minmax(0,.8fr) minmax(0,1.25fr);}
+.ghead>div{padding:9px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;background:var(--surface-2)}
+.row{border-top:1px solid var(--line)}
+.row.weekend{background:color-mix(in srgb,var(--surface-2) 45%,var(--surface))}
+.cell{padding:12px;min-width:0;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:6px;position:relative}
+.cell:first-child{border-left:0}
+.day .dn{font-family:var(--f-display);font-size:20px;line-height:1}
+.day .dd{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.day .kc{margin-top:auto;font-size:11px;color:var(--muted);line-height:1.5}
+.lab{display:none;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.dish{display:flex;gap:7px;align-items:flex-start;font-size:14px}
+.dish .dot{margin-top:5px}
+.dish a{color:inherit;text-decoration:none;border-bottom:1px dotted color-mix(in srgb,var(--muted) 60%,transparent)}
+.dish a:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.dish .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;flex:none;width:3.4em;margin-top:2px}
+.extra{font-size:13px;color:var(--muted)}
+.tags{display:flex;gap:4px;flex-wrap:wrap}
+.tag{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted);font-weight:600;white-space:nowrap}
+.row.locked .cell{background:color-mix(in srgb,var(--accent-soft) 35%,transparent)}
+.lockbtn{padding:2px 6px;font-size:11px;margin-top:6px;align-self:flex-start;color:var(--muted)}
+.lockbtn[aria-pressed="true"]{color:var(--accent)}
+.cell.out{background:repeating-linear-gradient(135deg,transparent 0 8px,color-mix(in srgb,var(--line) 45%,transparent) 8px 9px)}
+.tag.outtag{background:var(--warn-soft);color:var(--warn)}
+.tag.home{background:var(--ok-soft);color:var(--ok)}
+.stat-row{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--surface-2);border-radius:10px;padding:10px 14px;min-width:130px}
+.stat b{font-family:var(--f-display);font-size:24px;font-weight:400;display:block}
+.prop{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start}
+.prop .grow{flex:1;min-width:0}
+.sub{display:flex;flex-direction:column;gap:4px}
+.sub+.sub{border-top:1px dashed var(--line);padding-top:8px;margin-top:2px}
+.subhead{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.sublab{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.tag.harv{background:var(--accent-soft);color:var(--accent)}
+.tag.pin{background:var(--accent-soft);color:var(--accent)}
+.checks{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+.ck{font-size:11px;padding:1px 7px;border-radius:5px;font-weight:600}
+.bal{display:flex;gap:3px;flex-wrap:wrap}
+.bp{font-size:10.5px;padding:0 6px;border-radius:4px;font-weight:600;line-height:1.7}
+.bp.ok{background:var(--ok-soft);color:var(--ok)}.bp.bad{background:var(--bad-soft);color:var(--bad)}.bp.warn{background:var(--warn-soft);color:var(--warn)}
+.ck.info{background:var(--warn-soft);color:var(--warn);font-weight:500}
+.ck.ok{background:var(--ok-soft);color:var(--ok)}.ck.bad{background:var(--bad-soft);color:var(--bad)}
+.editbtn{position:absolute;top:8px;right:8px;opacity:.0;transition:opacity .15s}
+.cell:hover .editbtn,.editbtn:focus-visible{opacity:1}
+@media (hover:none){.editbtn{opacity:.8}}
+.empty-cell{font-size:13px;color:var(--muted);font-style:italic}
+
+.editor{background:var(--surface-2);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.editor select{width:100%}
+.editor .acts{display:flex;gap:6px;flex-wrap:wrap}
+
+select,input[type=text],input[type=number],input[type=date],textarea{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 8px;min-width:0;max-width:100%}
+textarea{width:100%;resize:vertical}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted);min-width:0}
+label.f>input,label.f>select,label.f>textarea{font-weight:400;color:var(--ink);font-size:14px}
+
+/* panels */
+.panel{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.panel h2{font-size:21px;margin-bottom:4px}
+.sec-h{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:22px}
+.sec-h h2{font-size:24px}
+
+/* school editor */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:12px}
+.sday{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface);display:flex;flex-direction:column;gap:8px;min-width:0}
+.sday h3{font-size:17px}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 9px;font-size:12px;font-weight:600;display:inline-flex;gap:5px;align-items:center;color:var(--muted)}
+.chip[aria-pressed="true"]{border-color:currentColor;background:var(--surface-2);color:var(--ink)}
+.weeks-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+
+/* recipes */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:12px}
+.rcard{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface);display:flex;flex-direction:column;gap:6px;text-align:left;min-width:0}
+.rcard:hover{border-color:var(--muted)}
+.rcard .nm{font-weight:600;font-size:15px}
+.rcard .meta{display:flex;gap:4px;flex-wrap:wrap}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgb(10 16 12 / .45);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:max(24px,env(safe-area-inset-top,0px)) 12px 24px;overflow-y:auto}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:640px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 50px rgb(0 0 0 / .3)}
+.modal h2{font-size:23px}
+.frow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.cbx{display:flex;gap:10px;flex-wrap:wrap;font-size:14px}
+.cbx label{display:flex;gap:5px;align-items:center}
+table.port{width:100%;border-collapse:collapse;font-size:13px}
+table.port th,table.port td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.port th:first-child,table.port td:first-child{text-align:left;white-space:normal}
+table.port th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.tscroll{overflow-x:auto}
+
+/* shopping */
+.shop{columns:2 280px;column-gap:24px;margin-top:10px}
+.shop label{display:flex;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line);break-inside:avoid;font-size:14px;align-items:baseline}
+.shop label .q{margin-left:auto;font-family:var(--f-mono);font-size:13px;color:var(--muted);white-space:nowrap}
+.shop input:checked+span{text-decoration:line-through;color:var(--muted)}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;z-index:60;max-width:calc(100% - 32px)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.rules{font-size:13px;color:var(--muted);margin-top:12px;line-height:1.6}
+
+@media (max-width:860px){
+  .lockbtn{margin-top:0}
+  .ghead{display:none}
+  .row{grid-template-columns:1fr;border-top:8px solid var(--bg)}
+  .grid{background:transparent;border:0}
+  .row{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+  .row.weekend{background:var(--surface)}
+  .cell{border-left:0;border-top:1px solid var(--line)}
+  .cell:first-child{border-top:0;flex-direction:row;align-items:baseline;gap:10px;background:var(--surface-2)}
+  .day .kc{margin-top:0;margin-left:auto;text-align:right}
+  .lab{display:block}
+  .editbtn{opacity:.8}
+  .weeknav{margin-left:0;width:100%;justify-content:space-between}
+  .weeknav .lbl{min-width:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+[hidden]{display:none!important}
+.login{max-width:420px;margin:12vh auto 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.login h1{font-size:28px}
+#session{text-transform:none;letter-spacing:0;margin-left:8px}
+#session button{font-size:12px;padding:2px 8px}
+</style>
+</head>
+<body>
+<div id="login-screen" class="login" hidden>
+  <h1>Menú Familiar</h1>
+  <p class="muted">Entra con tu email. Te llegará un enlace para acceder; no hace falta contraseña.</p>
+  <form id="login-form" style="display:flex;flex-direction:column;gap:10px">
+    <label class="f">Email<input type="email" id="login-email" required autocomplete="email"></label>
+    <button class="btn primary" type="submit" id="login-btn">Enviarme el enlace</button>
+  </form>
+  <p class="small" id="login-msg" role="status"></p>
+</div>
+<div id="app-root" hidden>
+
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Menú Familiar</h1>
+      <span class="who">2 adultos · niñas de 5, 3 y 1 año <span id="session"></span></span>
+    </div>
+    <div class="bar">
+      <div class="tabs" role="tablist" id="tabs">
+        <button role="tab" data-act="tab" data-tab="semana" aria-selected="true">Semana</button>
+        <button role="tab" data-act="tab" data-tab="cole" aria-selected="false">Menú del cole</button>
+        <button role="tab" data-act="tab" data-tab="recetas" aria-selected="false">Recetas</button>
+        <button role="tab" data-act="tab" data-tab="ajustes" aria-selected="false">Ajustes</button>
+      </div>
+      <div class="weeknav" id="weeknav">
+        <button class="btn icon ghost" data-act="wk-prev" aria-label="Semana anterior">‹</button>
+        <span class="lbl" id="wklbl">—</span>
+        <button class="btn icon ghost" data-act="wk-next" aria-label="Semana siguiente">›</button>
+        <button class="btn sm ghost" data-act="wk-today">Hoy</button>
+      </div>
+    </div>
+  </header>
+  <main id="main"><p class="muted" style="margin-top:20px">Cargando recetas y menús…</p></main>
+</div>
+<div id="modal-root"></div>
+<div id="toast" class="toast" hidden></div>
+
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="db.js"></script>
+<script>
+(() => {
+/* ---------- constantes ---------- */
+const PROT = {
+  carne:{l:"Carne",c:"var(--p-carne)"}, pblanco:{l:"Pescado blanco",c:"var(--p-pblanco)"},
+  pazul:{l:"Pescado azul",c:"var(--p-pazul)"}, huevo:{l:"Huevo",c:"var(--p-huevo)"},
+  legumbre:{l:"Legumbre",c:"var(--p-legumbre)"}, ninguna:{l:"Sin proteína",c:"var(--p-ninguna)"}
+};
+const GROUPS = {verdura:"Verdura cocinada",cruda:"Hortaliza cruda",cereal:"Cereal / pasta / arroz",patata:"Patata",legumbre:"Legumbre",lacteo:"Lácteo",fruta:"Fruta"};
+const BASES = {cereal:"Cereal / pasta / arroz",patata:"Patata",legumbre:"Legumbre",verdura:"Verdura"};
+const COURSES = {primero:"Primero",segundo:"Segundo",completo:"Plato completo",guarnicion:"Guarnición",merienda:"Merienda / snack"};
+const MEALS = {comida:"Comida",cena:"Cena",merienda:"Merienda y snack"};
+const DOW = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const MONTHS = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const DEFAULTS = {
+  diners:[
+    {id:"h",name:"Hombre",kcal:1800,factor:1},
+    {id:"m",name:"Mujer",kcal:1600,factor:0.9},
+    {id:"n5",name:"Niña 5 años",kcal:1400,factor:0.6},
+    {id:"n3",name:"Niña 3 años",kcal:1250,factor:0.5},
+    {id:"n1",name:"Niña 1 año",kcal:900,factor:0.35}
+  ],
+  adultFormat:"alternar", meriendaFor:"todos", noSchool:"pauta", pizza:"si",
+  targets:{carne:[3,4],pescado:[3,4],pazul:[1,2],huevo:[3,4],legumbre:[2,4]},
+  breadKcal:100, fruitKcal:80, dairyKcal:70
+};
+const pcat = p => (p==="pblanco"||p==="pazul") ? "pescado" : p;
+const DIN_MAP = {carne:["pescado","huevo"], pescado:["carne","huevo"], huevo:["pescado","carne"]};
+const CAT_L = {carne:"carne",pescado:"pescado",huevo:"huevo",legumbre:"legumbre"};
+
+/* ---------- estado ---------- */
+const S = {db:null, dbState:"loading", sample:null, sampleImages:false,
+  recipes:{}, school:{}, plans:{}, settings:null, pantry:null, knowledge:null, aiProps:null, aiBusy:false, downloads:null, loaded:{recipes:false,school:false,plans:false,settings:false},
+  tab:"semana", week:null, weekAuto:true, editing:null, recFilter:{meal:"",course:"",prot:"",q:"",h:false},
+  saving:false, importing:false, ticks:{}};
+
+/* ---------- utilidades ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2,"0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseISO = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const addDays = (s,n) => { const d = parseISO(s); d.setDate(d.getDate()+n); return iso(d); };
+const mondayOf = s => { const d = parseISO(s); const k = (d.getDay()+6)%7; d.setDate(d.getDate()-k); return iso(d); };
+const fmtShort = s => { const d = parseISO(s); return `${d.getDate()} ${MONTHS[d.getMonth()]}`; };
+const weekDates = w => Array.from({length:7},(_,i)=>addDays(w,i));
+const settings = () => ({...DEFAULTS, ...(S.settings||{}), targets:{...DEFAULTS.targets, ...((S.settings||{}).targets||{})}, diners:(S.settings&&S.settings.diners)||DEFAULTS.diners});
+const fsum = ids => settings().diners.filter(d=>ids.includes(d.id)).reduce((a,d)=>a+Number(d.factor||0),0);
+const allIds = () => settings().diners.map(d=>d.id);
+const adultIds = () => settings().diners.filter(d=>d.id==="h"||d.id==="m").map(d=>d.id);
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>t.hidden=true,3200); }
+function rngFrom(seed){ let h=2166136261; for(const c of String(seed)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);} return ()=>{h+=0x6D2B79F5;let t=h;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;}; }
+const R = id => S.recipes[id];
+const recList = () => Object.values(S.recipes).sort((a,b)=>a.name.localeCompare(b.name,"es"));
+const hasG = (r,gs) => (r.groups||[]).some(g=>gs.includes(g));
+
+/* ---------- reglas ---------- */
+function realSchoolDay(date){ const w = S.school[mondayOf(date)]; const d = w && w.days && w.days[date]; return d && !d.sinCole ? d : null; }
+function schoolDay(date){
+  const w = S.school[mondayOf(date)]; const d = w && w.days && w.days[date];
+  if(d) return d.sinCole ? null : d;
+  const wd=(parseISO(date).getDay()+6)%7; if(wd>=5 || settings().noSchool!=="pauta") return null;
+  return estimateSchool(date);
+}
+/* Pauta del cole: para un día sin menú, proteína, base y postre más habituales ese día de la semana, pesando más las semanas recientes */
+function estimateSchool(date){
+  const key=date+"|"+Object.values(S.school).map(w=>w.updated||0).join(",");
+  S._est=S._est||{}; if(key in S._est) return S._est[key];
+  const wd=(parseISO(date).getDay()+6)%7; const tMon=parseISO(mondayOf(date));
+  const P={}, B={}, D={}, L={}; let n=0;
+  Object.values(S.school).forEach(w=>Object.entries(w.days||{}).forEach(([ds,d])=>{
+    if(!d || d.sinCole || d.estimado) return; const dt=parseISO(ds); if((dt.getDay()+6)%7!==wd) return;
+    const weeks=Math.abs(Math.round((tMon-parseISO(mondayOf(ds)))/6048e5)); const wt=1/(1+weeks/4); n++;
+    const pr=(d.prot||[]); const main=pr.find(x=>x!=="legumbre")||pr[0]; if(main) P[main]=(P[main]||0)+wt;
+    if(pr.includes("legumbre")||d.base==="legumbre") L.y=(L.y||0)+wt; else L.n=(L.n||0)+wt;
+    if(d.base) B[d.base]=(B[d.base]||0)+wt; D[d.postreTipo||"fruta"]=(D[d.postreTipo||"fruta"]||0)+wt;
+  }));
+  const top=o=>Object.entries(o).sort((a,b)=>b[1]-a[1])[0];
+  let res=null;
+  if(n){
+    const p=top(P), b=top(B), dd=top(D);
+    let base=b?b[0]:"cereal"; const prot=[]; if(p) prot.push(p[0]);
+    if((L.y||0)>(L.n||0)){ base="legumbre"; if(!prot.includes("legumbre")) prot.push("legumbre"); }
+    if(!prot.length) prot.push("carne");
+    res={estimado:true, n, primero:"", segundo:"", guarnicion:"", postre:"", prot, base, postreTipo:dd?dd[0]:"fruta"};
+  }
+  S._est[key]=res; return res;
+}
+function lunchProfile(day){
+  // day: {date, school, comida:{ids}}
+  if(day.school){ const s=day.school; return {prots:(s.prot||[]), base:s.base||"", dessert:s.postreTipo||"fruta", src:"cole"}; }
+  const rs=(day.comida&&day.comida.ids||[]).map(R).filter(Boolean);
+  const prots=[...new Set(rs.map(r=>r.protein).filter(p=>p&&p!=="ninguna"))];
+  const gs=new Set(rs.flatMap(r=>r.groups||[]));
+  let base = gs.has("legumbre")?"legumbre": gs.has("cereal")?"cereal": gs.has("patata")?"patata": (gs.has("verdura")||gs.has("cruda"))?"verdura":"";
+  return {prots, base, dessert:"fruta", src:"casa"};
+}
+function allowedDinner(prots){
+  const cats=[...new Set(prots.map(pcat).filter(c=>DIN_MAP[c]))];
+  let a=["carne","pescado","huevo"];
+  cats.forEach(c=>{ a=a.filter(x=>DIN_MAP[c].includes(x)); });
+  if(!a.length) a=["huevo"];
+  return a;
+}
+function needGroups(base){
+  if(["cereal","patata","legumbre"].includes(base)) return {need:["verdura","cruda"], label:"verduras u hortalizas", avoid:["cereal","patata","legumbre"]};
+  if(base==="verdura") return {need:["cereal","patata"], label:"cereal o patata", avoid:[]};
+  return {need:[],label:"",avoid:[]};
+}
+function dessertRule(lunchDessert){ return (lunchDessert==="lacteo"||lunchDessert==="ambos") ? ["fruta"] : ["lacteo","fruta"]; }
+
+/* Cena recomendada por el cole: «Base · proteína · postre» → objetivo estructurado */
+function parseSug(sug){
+  if(!sug) return null; const parts=String(sug).split("·").map(x=>norm(x));
+  const b=parts[0]||"", pr=parts[1]||"", ds=parts.slice(2).join(" ");
+  const groups=[]; let label="";
+  if(/legumbr/.test(b)){ groups.push("legumbre"); label="legumbre"; }
+  else if(/verdura/.test(b)){ groups.push("verdura"); label="verdura cocinada"; }
+  else if(/hortaliza|crud/.test(b)){ groups.push("cruda"); label="hortaliza cruda"; }
+  else { if(/patata/.test(b)) groups.push("patata"); if(/arroz|cereal|quinoa|trigo/.test(b)) groups.push("cereal"); label=String(sug).split("·")[0].trim().toLowerCase(); }
+  const prot = /azul/.test(pr)?"pazul" : /blanco/.test(pr)?"pblanco" : /pescado/.test(pr)?"pescado" : /carne/.test(pr)?"carne" : /huevo/.test(pr)?"huevo" : null;
+  return {groups, label, prot, lacteo:/yogur|lacteo|leche/.test(ds)};
+}
+const PROT_TXT = {carne:"carne magra",pblanco:"pescado blanco",pazul:"pescado azul",pescado:"pescado",huevo:"huevo"};
+function dinnerTarget(day){
+  const lp=lunchProfile(day); const allowed=allowedDinner(lp.prots); const ng=needGroups(lp.base);
+  const rule={allowed, prefer:null, ng, desserts:dessertRule(lp.dessert), src:"regla", note:""};
+  const rec=day.school && !day.school.estimado ? parseSug(day.school.sug) : null;
+  if(!rec || !rec.prot) return rule;
+  const rc=pcat(rec.prot);
+  if(!allowed.includes(rc)) return {...rule, note:`El cole recomienda ${PROT_TXT[rec.prot]}, pero repite la proteína de la comida: uso ${allowed.join(" o ")}.`};
+  return {allowed:[rc], prefer:(rec.prot==="pazul"||rec.prot==="pblanco")?rec.prot:null,
+    ng: rec.groups.length ? {need:rec.groups, label:rec.label, avoid:[]} : ng,
+    desserts: rec.lacteo?["lacteo","fruta"]:["fruta"], src:"cole", note:""};
+}
+/* Recetas con proteína a elegir (p. ej. Peli y pizza): la cobertura se guarda en el hueco como «top» */
+const slotProts = slot => ((slot&&slot.ids)||[]).map(R).filter(Boolean).map(r=>r.toppings&&slot.top?slot.top:r.protein);
+const topName = (r,top) => r&&r.toppings&&r.toppings[top] ? parseIng(r.toppings[top]).n : "";
+const dowOf = date => (parseISO(date).getDay()+6)%7;
+function topFor(r, tg){
+  if(!r||!r.toppings) return [];
+  if(tg.ng.need.length && !hasG(r,tg.ng.need)) return [];
+  return Object.keys(r.toppings).filter(p=>tg.allowed.includes(pcat(p)) && (!tg.prefer || pcat(tg.prefer)!==pcat(p) || p===tg.prefer));
+}
+function dinnerChecks(day){
+  const lp=lunchProfile(day); const rs=(day.cena&&day.cena.ids||[]).map(R).filter(Boolean);
+  if(!rs.length) return [];
+  const tg=dinnerTarget(day); const allowed=tg.allowed;
+  const dprot=[...new Set(slotProts(day.cena).filter(p=>p&&p!=="ninguna").map(pcat))];
+  const animal=dprot.filter(c=>c!=="legumbre");
+  const protOk = animal.length>0 && animal.every(c=>allowed.includes(c));
+  const ng=tg.ng; const gs=rs.flatMap(r=>r.groups||[]);
+  const baseOk = !ng.need.length || gs.some(g=>ng.need.includes(g));
+  const dOk = tg.desserts.includes(day.postre&&day.postre.v||"fruta");
+  const c=tg.src==="cole"?" (cole)":"";
+  const out=[
+    {ok:protOk, t: protOk ? `Proteína ✓${c}` : `Proteína: mejor ${allowed.map(x=>tg.prefer?PROT_TXT[tg.prefer]:x).join(" o ")}`},
+    {ok:baseOk, t: baseOk ? `Guarnición ✓${c}` : `Falta ${ng.label}`},
+    {ok:dOk, t: dOk ? `Postre ✓` : `Postre: mejor fruta`}
+  ];
+  if(tg.note) out.push({ok:false, info:true, t:tg.note});
+  return out;
+}
+
+/* ---------- generador ---------- */
+function weekCounts(days){
+  const c={carne:0,pescado:0,pazul:0,huevo:0,legumbre:0};
+  const addOcc = (prots, groups) => {
+    const cats=new Set(prots.map(pcat)); if((groups||[]).includes("legumbre")) cats.add("legumbre");
+    cats.forEach(k=>{ if(k in c) c[k]++; }); if(prots.includes("pazul")) c.pazul++;
+  };
+  for(const d of days){
+    if(d.school){ const s=d.school; addOcc(s.prot||[], s.base==="legumbre"?["legumbre"]:[]); }
+    else if(d.comida){ const rs=d.comida.ids.map(R).filter(Boolean); addOcc(rs.map(r=>r.protein).filter(p=>p!=="ninguna"), rs.flatMap(r=>r.groups||[])); }
+    if(d.cena){ const rs=(d.cena.ids||[]).map(R).filter(Boolean); addOcc(slotProts(d.cena).filter(p=>p&&p!=="ninguna"), rs.flatMap(r=>r.groups||[])); }
+  }
+  return c;
+}
+/* Equilibrio del plato (primero+segundo o plato completo): proteína, verdura, hidratos y grasa saludable */
+const FAT_RE=/aceite|aguacate|nuez|nueces|almendr|sesamo|tahini|aceituna|frutos secos|cacahuete/;
+function mealBalance(recs){
+  recs=recs.filter(Boolean); const gs=new Set(recs.flatMap(r=>r.groups||[]));
+  const hcN=recs.filter(r=>hasG(r,["cereal","patata","legumbre"])).length;
+  return { prot: recs.some(r=>r.toppings || (r.protein&&r.protein!=="ninguna")),
+    veg: gs.has("verdura")||gs.has("cruda"), hc: hcN>0, dupHc: hcN>1 && recs.filter(r=>hasG(r,["cereal","patata"])).length>1,
+    fat: recs.some(r=>r.protein==="pazul" || (r.ingredients||[]).some(l=>FAT_RE.test(norm(l)))) };
+}
+/* En la cena el pan cubre los hidratos si el plato no los lleva (lo recomienda el cole) */
+function balScore(recs, meal){ const b=mealBalance(recs); return (b.prot?2:0)+(b.veg?2.5:0)+(meal==="cena"?(b.hc?0.3:0):(b.hc?2:0))+(b.fat?1:0)-(b.dupHc?2:0); }
+function pickPair(prims, segs, sp, ss, meal, extra, rng){
+  let best=null, bs=-Infinity;
+  const P=prims.length?prims:[null], G=segs.length?segs:[null];
+  for(const a of P) for(const b of G){ if(!a&&!b) continue;
+    const sc=(a?sp(a):0)+(b?ss(b):0)+balScore([a,b],meal)*1.5+(extra?extra(a,b):0)+rng()*1.2;
+    if(sc>bs){ bs=sc; best=[a,b]; } }
+  return best||[null,null];
+}
+function pickBest(cands, score, rng){ let best=null, bs=-Infinity; for(const r of cands){ const s=score(r)+rng()*1.2; if(s>bs){bs=s;best=r;} } return best; }
+
+const SLOT_ORDER = {snack:0, comida:1, merienda:2, cena:3};
+const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+const pairKey = (a,b) => [a,b].sort().join("|");
+function ingName(line){ return parseIng(line).n; }
+function pantryList(){ return ((S.pantry&&S.pantry.items)||[]).map(norm).filter(Boolean); }
+function inPantry(name, pl){ const n=norm(name); return !!n && pl.some(p=>n.includes(p)||p.includes(n)); }
+function pantryScore(r, pl){ if(!pl.length) return 0; const ings=(r.ingredients||[]).map(ingName).filter(n=>!/aceite|sal\b|agua|pimienta/i.test(n)); if(!ings.length) return 0; return ings.filter(n=>inPantry(n,pl)).length/ings.length*4; }
+function knowledge(excludeWeek){
+  const k={freq:{},pair:{},meals:0};
+  const add = ids => { if(!ids.length) return; k.meals++; ids.forEach(id=>k.freq[id]=(k.freq[id]||0)+1); for(let i=0;i<ids.length;i++) for(let j=i+1;j<ids.length;j++){ const p=pairKey(ids[i],ids[j]); k.pair[p]=(k.pair[p]||0)+1; } };
+  Object.values(S.plans).forEach(p=>{ if(p.weekId===excludeWeek) return; (p.days||[]).forEach(d=>["comida","cena"].forEach(key=>{ const s=d[key]; if(s&&!s.fuera&&s.ids) add(s.ids.filter(R)); })); });
+  const imp=S.knowledge||{}; Object.entries(imp.freq||{}).forEach(([id,n])=>k.freq[id]=(k.freq[id]||0)+n); Object.entries(imp.pair||{}).forEach(([p,n])=>k.pair[p]=(k.pair[p]||0)+n); k.meals+=imp.meals||0;
+  return k;
+}
+function lunchVeg(day){
+  const v=new Set();
+  if(day.school){ const s=day.school; const t=norm((s.primero||"")+" "+(s.guarnicion||""));
+    if(s.base==="verdura" || /crema|pure|verdura|menestra|pisto|brocoli|coliflor|judias|calabac/.test(norm(s.primero))) v.add("verdura");
+    if(/ensalada|gazpacho|salmorejo/.test(t)) v.add("cruda"); return v; }
+  (day.comida&&day.comida.ids||[]).map(R).filter(Boolean).forEach(r=>(r.groups||[]).forEach(g=>{ if(g==="verdura"||g==="cruda") v.add(g); }));
+  return v;
+}
+
+function generateWeek(weekId, seed, existing, opts){
+  opts=opts||{};
+  const rng=rngFrom(weekId+"|"+seed); const st=settings(); const T=st.targets;
+  const recs=recList(); const used={};
+  const use = ids => ids.forEach(id=>used[id]=(used[id]||0)+1);
+  let curDate=weekId;
+  /* Variedad entre semanas: penaliza lo que ya salió la semana anterior */
+  const prevPlan=S.plans[addDays(weekId,-7)];
+  const prevU=new Set(((prevPlan&&prevPlan.days)||[]).flatMap(d=>["comida","cena"].flatMap(k=>(d[k]&&d[k].ids)||[])));
+  const seasonOk = r => !r.temporada || r.temporada.includes(parseISO(curDate).getMonth()+1);
+  const by = (meal,course) => recs.filter(r=>!r.ritual && (r.meals||[]).includes(meal) && r.course===course && seasonOk(r) && (!r.adultos || curAdult));
+  /* Monta una comida o cena: «ligero + plato completo» o «primero + segundo (+ guarnición)», buscando el equilibrio */
+  function compose(meal, fmt, o){
+    const comps=by(meal,"completo").filter(o.compFilter);
+    const prims=by(meal,"primero").filter(o.primFilter);
+    const ligs=by(meal,"primero").filter(r=>r.ligero===true);
+    const segs=by(meal,"segundo").filter(o.segFilter);
+    const guars=by(meal,"guarnicion");
+    const extra = set => (o.needOk?o.needOk(set):0) + (o.avoid?-set.filter(Boolean).reduce((a,r)=>a+o.avoid(r),0):0);
+    const evalC=()=>{ let best=null,bs=-Infinity;
+      for(const c of comps){ const Ls=c.ligero===false&&ligs.length?ligs:[null];
+        for(const l of Ls){ const sc=o.sc(c)+(l?o.sl(l):0)+balScore([l,c],meal)*1.5+extra([l,c])+rng()*1.2; if(sc>bs){bs=sc;best=[l,c];} } }
+      return [best,bs]; };
+    const evalP=()=>{ let best=null,bs=-Infinity; const P=prims.length?prims:[null], G=segs.length?segs:[null];
+      for(const a of P) for(const b of G){ if(!a&&!b) continue;
+        for(const g of [null,...(b?guars:[])]){ const set=[a,b,g];
+          const sc=(a?o.sp(a):0)+(b?o.ss(b):0)+(g?o.sl(g)-0.6:0)+balScore(set,meal)*1.5+extra(set)+(o.pair?o.pair(a,b):0)+rng()*1.2;
+          if(sc>bs){bs=sc;best=set;} } }
+      return [best,bs]; };
+    /* El formato elegido tiene ventaja, pero si sus opciones están muy gastadas gana el otro */
+    const [bc,scC]=evalC(), [bp,scP]=evalP();
+    const r = !bc ? bp : !bp ? bc : ((fmt==="c"?scC+2:scC) >= (fmt==="ps"?scP+2:scP) ? bc : bp);
+    return (r||[]).filter(Boolean).map(x=>x.id);
+  }
+  const dates=weekDates(weekId);
+  const days=dates.map(date=>({date, school:schoolDay(date)}));
+  const ex = existing && existing.days ? Object.fromEntries(existing.days.map(d=>[d.date,d])) : {};
+  const pend=new Set((opts.pending||[]).filter(R));
+  const K=knowledge(weekId); const pl=opts.pantry?pantryList():[];
+  let curAdult=false; /* true mientras se elige la comida de adultos de un día de cole */
+  const bonus = r => (r.adultos ? (curAdult?1.5:-50) : 0) + (pend.has(r.id)?8:0) + Math.min(1.5,(K.freq[r.id]||0)*0.3) + pantryScore(r,pl);
+  const pairB = (a,b) => a&&b ? Math.min(3,(K.pair[pairKey(a,b)]||0)*1.2) : 0;
+  const take = ids => { use(ids); ids.forEach(id=>pend.delete(id)); };
+  const frozen = (date,key) => { const e=ex[date]; if(e&&e.lock) return true; if(opts.only) return !(date===opts.only.date && key===opts.only.key); if(opts.onlyKey) return key!==opts.onlyKey; if(!opts.freezeBefore) return false; if(date<opts.freezeBefore) return true; return date===opts.freezeBefore && SLOT_ORDER[key] < (opts.freezeSlot||0); };
+  const keepSlot = (date,key) => { const e=ex[date]; const s=e&&e[key]; return !!(s && (s.pin || s.fuera || frozen(date,key))); };
+  const counts={carne:0,pescado:0,pazul:0,huevo:0,legumbre:0};
+  const bump = (prots, groups) => { const cats=new Set(prots.map(pcat)); if((groups||[]).includes("legumbre")) cats.add("legumbre"); cats.forEach(k=>{if(k in counts)counts[k]++}); if(prots.includes("pazul")) counts.pazul++; };
+  days.forEach(d=>{ if(d.school) bump(d.school.prot||[], d.school.base==="legumbre"?["legumbre"]:[]); });
+  days.forEach(d=>{ ["snack","comida","merienda","cena"].forEach(k=>{ if(keepSlot(d.date,k)) use(ex[d.date][k].ids||[]); }); });
+  let prevMer=[], prevSnack=[], prevDinCat=null, alt=0;
+  /* Cena fija semanal (Peli y pizza): viernes si encaja con la comida del cole; si no, sábado */
+  const ritual = st.pizza!=="no" ? recs.find(r=>r.ritual && (r.meals||[]).includes("cena")) : null;
+  let ritualDays=[];
+  if(ritual && !days.some(d=>{ const sl=ex[d.date]&&ex[d.date].cena; return sl && (sl.ids||[]).includes(ritual.id) && keepSlot(d.date,"cena"); })){
+    ritualDays=days.filter(d=>(ritual.dias||[4,5]).includes(dowOf(d.date)) && !keepSlot(d.date,"cena")).map(d=>d.date);
+    const fri=ritualDays[0]; const fd=days.find(d=>d.date===fri);
+    if(fri && fd && fd.school && !topFor(ritual, dinnerTarget({...fd})).length) ritualDays=ritualDays.slice(1);
+  }
+  let ritualDone=false;
+  const protMatch = (rp, P) => rp===P ? 3 : (pcat(rp)===pcat(P) ? 2 : -99);
+  for(const d of days){
+    const e=ex[d.date]||{};
+    d.lock=!!e.lock; curDate=d.date;
+    /* snack para llevar al cole (solo niñas, días de cole) */
+    if(keepSlot(d.date,"snack")){ d.snack=e.snack; }
+    else if(d.school){
+      const all=by("merienda","merienda"); const port=all.filter(r=>r.llevar);
+      const km=keepSlot(d.date,"merienda")?((e.merienda&&e.merienda.ids)||[]).map(R).filter(Boolean):[]; const kmG=new Set(km.flatMap(r=>r.groups||[]));
+      const sc = r => km.length ? ["fruta","lacteo","cereal"].reduce((a,g)=>a+((r.groups||[]).includes(g)?(kmG.has(g)?-0.8:1.3):0),0) - (km.some(x=>x.id===r.id)?10:0) : 0;
+      const sn=pickBest(port.length?port:all, r=>sc(r)-3*(prevSnack.includes(r.id)?1:0)-1.5*(used[r.id]||0)+bonus(r), rng);
+      d.snack={ids:sn?[sn.id]:[],pin:false}; if(sn) take([sn.id]);
+    } else d.snack={ids:[],pin:false};
+    prevSnack=[...prevSnack.slice(-2), ...((d.snack&&d.snack.ids)||[])];
+    const snR=((d.snack&&d.snack.ids)||[]).map(R).filter(Boolean); const snG=new Set(snR.flatMap(r=>r.groups||[]));
+    /* comida */
+    curAdult=!!d.school && !keepSlot(d.date,"comida");
+    curDate=d.date;
+    const gen = r => bonus(r)-3*(used[r.id]||0)-(prevU.has(r.id)?1.5:0);
+    const pb=(x,y)=>pairB(x&&x.id,y&&y.id);
+    if(keepSlot(d.date,"comida")){ d.comida=e.comida; }
+    else if(d.school){
+      const P=(d.school.prot||[])[0]||"ninguna"; const B=d.school.base;
+      let fmt = st.adultFormat==="alternar" ? (alt++%2===0?"ps":"c") : (st.adultFormat==="completo"?"c":"ps");
+      if(P==="legumbre") fmt="c";
+      const otherBase = r => (r.groups||[]).filter(g=>["cereal","patata","legumbre"].includes(g)&&g!==B).length*1.5;
+      const ids=compose("comida", fmt, {
+        compFilter:r=>protMatch(r.protein,P)>0, segFilter:r=>protMatch(r.protein,P)>0,
+        primFilter:r=> P==="legumbre" ? true : (B==="legumbre" || r.protein!=="legumbre"),
+        sc:r=>protMatch(r.protein,P)+((r.groups||[]).includes(B)?2:0)-otherBase(r)+gen(r),
+        ss:r=>protMatch(r.protein,P)+gen(r),
+        sp:r=>((r.groups||[]).includes(B)?2:0)-otherBase(r)+gen(r),
+        sl:r=>gen(r), pair:pb });
+      d.comida={ids,pin:false,kind:"adultos"}; take(ids);
+    } else {
+      const opts4=["legumbre","pescado","carne","huevo"];
+      const cat=pickBest(opts4, k=>((T[k]||[0,0])[0]-counts[k])*2 - (k===prevDinCat?1:0), rng);
+      const wantAzul = cat==="pescado" && counts.pazul < (T.pazul||[1])[0];
+      const okP = r => cat==="legumbre" ? (r.protein==="legumbre" || (r.groups||[]).includes("legumbre")) : pcat(r.protein)===cat;
+      const pz = r => (wantAzul && r.protein==="pazul") ? 1.5 : 0;
+      const fmt = cat==="legumbre" ? "c" : (rng()<0.55?"c":"ps");
+      const ids=compose("comida", fmt, {
+        compFilter:okP, segFilter:okP, primFilter:r=>r.protein!=="legumbre",
+        sc:r=>pz(r)+gen(r), ss:r=>pz(r)+gen(r), sp:gen, sl:gen, pair:pb });
+      d.comida={ids,pin:false,kind:"todos"}; take(ids);
+      const rs=ids.map(R); bump(rs.map(r=>r.protein).filter(p=>p!=="ninguna"), rs.flatMap(r=>r.groups||[]));
+    }
+    curAdult=false;
+    const lp=lunchProfile(d); const lv=lunchVeg(d);
+    /* merienda */
+    if(keepSlot(d.date,"merienda")){ d.merienda=e.merienda; }
+    else {
+      const comp = r => ["fruta","lacteo","cereal"].reduce((a,g)=>a+((r.groups||[]).includes(g)?(snG.has(g)?-0.8:1.3):0),0) - (snR.some(x=>x.id===r.id)?10:0);
+      const merAll=by("merienda","merienda"); const merPort=merAll.filter(r=>r.llevar);
+      const m=pickBest(d.school&&merPort.length?merPort:merAll, r=>comp(r)-3*(prevMer.includes(r.id)?1:0)-1.5*(used[r.id]||0)+bonus(r), rng);
+      d.merienda={ids:m?[m.id]:[],pin:false}; if(m) take([m.id]);
+    }
+    prevMer=[...prevMer.slice(-2), ...(d.merienda.ids||[])];
+    /* cena */
+    let ritualHere=false;
+    if(!keepSlot(d.date,"cena") && ritual && !ritualDone && ritualDays.includes(d.date)){
+      const tg=dinnerTarget(d); const tops=topFor(ritual,tg);
+      if(tops.length){ const top=pickBest(tops, p=>{ const k=pcat(p); const [mn]=T[k]||[0]; return (mn-counts[k]) + (tg.prefer===p?3:0) + (p==="pazul"&&counts.pazul<(T.pazul||[1])[0]?1:0); }, rng);
+        d.cena={ids:[ritual.id],pin:false,top}; take([ritual.id]); ritualDone=true; ritualHere=true; }
+    }
+    if(ritualHere){}
+    else if(keepSlot(d.date,"cena")){ d.cena=e.cena; }
+    else {
+      const tg=dinnerTarget(d); const allowed=tg.allowed;
+      const pendCats=new Set([...pend].map(R).filter(r=>(r.meals||[]).includes("cena")).map(r=>pcat(r.protein)));
+      const cat=pickBest(allowed, k=>{ const [mn,mx]=T[k]||[0,9]; return (mn-counts[k])*2 - (counts[k]>=mx?3:0) - (k===prevDinCat?1.5:0) + (pendCats.has(k)?4:0); }, rng);
+      const wantAzul = cat==="pescado" && (tg.prefer ? tg.prefer==="pazul" : counts.pazul < (T.pazul||[1])[0]);
+      const ng=tg.ng;
+      const pOk = r => pcat(r.protein)===cat;
+      const pz = r => cat!=="pescado" ? 0 : (r.protein==="pazul" ? (wantAzul?2:-0.5) : (wantAzul?-1:0.3));
+      const veg = r => { const gs=(r.groups||[]).filter(g=>g==="verdura"||g==="cruda"); return gs.reduce((a,g)=>a+(lv.has(g)?-1.2:1),0); };
+      const ids=compose("cena", rng()<0.5?"c":"ps", {
+        compFilter:pOk, segFilter:pOk,
+        primFilter:r=>r.protein==="ninguna"||!r.protein||(ng.need.includes("legumbre")&&r.protein==="legumbre"),
+        sc:r=>pz(r)+veg(r)+gen(r), ss:r=>pz(r)+gen(r), sp:r=>veg(r)+gen(r), sl:r=>veg(r)+gen(r), pair:pb,
+        needOk:set=> ng.need.length ? (set.some(r=>r&&hasG(r,ng.need))?3:-4) : 0,
+        avoid:r=>(r.groups||[]).filter(g=>ng.avoid.includes(g)).length*1.5 });
+      d.cena={ids,pin:false}; take(ids);
+    }
+    const drs=(d.cena.ids||[]).map(R).filter(Boolean);
+    bump(slotProts(d.cena).filter(p=>p&&p!=="ninguna"), drs.flatMap(r=>r.groups||[]));
+    prevDinCat = slotProts(d.cena).map(pcat).find(c=>c&&c!=="ninguna") || null;
+    /* postre de la cena */
+    if(e.postre&&(e.postre.pin||frozen(d.date,"cena")||(e.cena&&e.cena.fuera))){ d.postre=e.postre; }
+    else {
+      const o=dinnerTarget(d).desserts; const mer=(d.merienda.ids||[]).map(R).filter(Boolean).concat(snR);
+      const merLac=mer.some(r=>(r.groups||[]).includes("lacteo"));
+      d.postre={v: o.includes("lacteo") && !merLac ? "lacteo" : "fruta", pin:false};
+    }
+  }
+  return {weekId, seed, generated:true, pending:[...pend], estimated:days.filter(d=>d.school&&d.school.estimado).map(d=>d.date), days:days.map(d=>({date:d.date, lock:d.lock, snack:d.snack, comida:d.comida, merienda:d.merienda, cena:d.cena, postre:d.postre}))};
+}
+/* ---------- plan actual ---------- */
+function currentPlan(){
+  const w=S.week; const saved=S.plans[w];
+  if(saved) return {plan:saved, draft:false};
+  if(!Object.keys(S.recipes).length) return {plan:null, draft:false};
+  if(!S._draft || S._draft.weekId!==w || S._draftKey!==draftKey()) { S._draft=generateWeek(w,"auto",null); S._draftKey=draftKey(); }
+  return {plan:S._draft, draft:true};
+}
+const draftKey = () => JSON.stringify([S.week, Object.keys(S.recipes).length, Object.values(S.school).map(x=>x.updated||0), settings().noSchool]);
+function planDays(plan){ return plan.days.map(d=>({...d, school:schoolDay(d.date)})); }
+
+/* ---------- kcal ---------- */
+function dayKcal(d){
+  const st=settings(); const k = ids => (ids||[]).map(R).filter(Boolean).reduce((a,r)=>a+Number(r.kcal||0),0);
+  const lunch = k(d.comida&&d.comida.ids) + st.breadKcal + st.fruitKcal;
+  const mer = k(d.merienda&&d.merienda.ids);
+  const din = k(d.cena&&d.cena.ids) + st.breadKcal + (d.postre&&d.postre.v==="lacteo"?st.dairyKcal:st.fruitKcal);
+  return lunch+mer+din;
+}
+
+/* ---------- render ---------- */
+function render(){
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected", String(b.dataset.tab===S.tab)));
+  const dates=weekDates(S.week);
+  $("#wklbl").textContent = `${fmtShort(dates[0])} – ${fmtShort(dates[6])} ${parseISO(dates[6]).getFullYear()}`;
+  $("#weeknav").hidden = S.tab==="recetas" || S.tab==="ajustes";
+  const m=$("#main");
+  const fns={semana:renderWeek, cole:renderSchool, recetas:renderRecipes, compra:renderShop, ajustes:renderSettings};
+  m.innerHTML = dbNotice() + fns[S.tab]();
+}
+function dbNotice(){
+  if(S.dbState==="none") return `<div class="notice"><span class="grow">No se ha podido conectar con el almacenamiento: puedes probar el planificador, pero los cambios no se guardarán.</span></div>`;
+  return "";
+}
+const dotFor = p => `<span class="dot" style="background:${(PROT[p]||PROT.ninguna).c}" title="${esc((PROT[p]||PROT.ninguna).l)}"></span>`;
+function dishLine(id, k, slot){
+  const r=R(id); if(!r) return `<div class="dish"><span class="dot" style="background:var(--line)"></span><span class="muted">Receta eliminada</span></div>`;
+  const top = r.toppings && slot && slot.top ? slot.top : null;
+  return `<div class="dish">${k?`<span class="k">${k}</span>`:""}${dotFor(top||r.protein)}<span><a href="#" data-act="view-rec" data-id="${esc(id)}">${esc(r.name)}</a>${top?`<span class="muted small"> · con ${esc(topName(r,top))}</span>`:""}</span></div>`;
+}
+function dishes(slot){
+  const ids=(slot&&slot.ids)||[]; if(!ids.length) return `<div class="empty-cell">Sin receta compatible — añade una en Recetas</div>`;
+  if(ids.length===1) return dishLine(ids[0], null, slot);
+  const K={primero:"1º",segundo:"2º",completo:"Plato",guarnicion:"+"};
+  return ids.map((id,i)=>dishLine(id, (R(id)&&K[R(id).course])||(i===0?"1º":"2º"), slot)).join("");
+}
+function balanceBar(days){
+  const c=weekCounts(days); const T=settings().targets;
+  const items=[["carne","Carne","carne"],["pescado","Pescado","pblanco"],["pazul","· azul","pazul"],["huevo","Huevo","huevo"],["legumbre","Legumbre","legumbre"]];
+  return `<div class="balance"><span class="t">Balance semanal (comida + cena)</span>${items.map(([k,l,p])=>{
+    const [mn,mx]=T[k]||[0,99]; const v=c[k]; const st = v<mn?"warn":(v>mx?"bad":"ok"); const tx = v<mn?"bajo":(v>mx?"alto":"ok");
+    return `<span class="bchip">${dotFor(p)}${l} <b>${v}</b><span class="muted small">/${mn}–${mx}</span><span class="st ${st}">${tx}</span></span>`;}).join("")}</div>`;
+}
+function renderWeek(){
+  const w=S.week; let out="";
+  if(!S.loaded.recipes||!S.loaded.school) return `<p class="muted" style="margin-top:20px">Cargando…</p>`;
+  if(S.weekNotice) out+=`<div class="notice info"><span class="grow">${S.weekNotice}</span><button class="btn sm" data-act="tab" data-tab="cole">Importar menú del cole</button><button class="btn sm ghost" data-act="dismiss-notice">Cerrar</button></div>`;
+  if(!Object.keys(S.recipes).length) return out+`<div class="panel"><h2>Aún no hay recetas</h2><p class="muted">El planificador elige platos de tu recetario. Crea la primera receta para empezar.</p><button class="btn primary" data-act="new-rec">Nueva receta</button></div>`;
+  const estDays=weekDates(w).filter(ds=>{ const sd=schoolDay(ds); return sd&&sd.estimado; });
+  if(estDays.length) out+=`<div class="notice info"><span class="grow"><b>${estDays.length===5?"No hay menú del cole para esta semana":"Faltan "+estDays.length+" días del menú del cole"}.</b> Para esos días uso la pauta de las semanas anteriores (la proteína, la base y el postre más habituales de cada día de la semana). Cuando tengas el menú real, impórtalo y pulsa «Generar menú».</span><button class="btn sm" data-act="tab" data-tab="cole">Importar menú del cole</button></div>`;
+  const {plan,draft}=currentPlan(); const days=planDays(plan);
+  const inWeek = weekDates(w).includes(iso(new Date()));
+  out+=`<div class="sec-h"><div><h2>Semana del ${fmtShort(w)}</h2><div class="muted small">${draft?"Propuesta automática sin guardar.":"Guardado."} Toca ✎ para cambiar un plato o marcar que coméis fuera. 🔒 ancla un día entero.</div></div>
+    <div class="bar"><button class="btn primary" data-act="regen" title="Crea un menú nuevo para la semana respetando lo fijado y los días anclados">Generar menú</button>${draft?`<button class="btn" data-act="save-draft">Guardar esta propuesta</button>`:""}${inWeek?`<button class="btn" data-act="replan-today" title="Mantiene los días anteriores a hoy y rehace el resto">Replanificar desde hoy</button>`:""}</div></div>`;
+  const noSnack=!draft && days.some(d=>d.school && !d.snack);
+  if(noSnack) out+=`<div class="notice info"><span class="grow">Este menú se guardó antes de existir el snack del cole.</span><button class="btn sm primary" data-act="add-snacks">Añadir snacks sin tocar el resto</button></div>`;
+  const stale=(plan.estimated||[]).filter(ds=>realSchoolDay(ds));
+  if(!draft && stale.length) out+=`<div class="notice"><span class="grow">Este menú se generó con la pauta estimada, pero ya tienes el menú real del cole de ${stale.length} día${stale.length>1?"s":""}. Revisa las comprobaciones de la cena o genera de nuevo.</span><button class="btn sm primary" data-act="regen">Generar menú</button></div>`;
+  const pend=(plan.pending||[]).filter(R);
+  if(pend.length) out+=`<div class="notice"><span class="grow"><b>Pendiente de reubicar:</b> ${pend.map(id=>esc(R(id).name)).join(" · ")}. No cabía en ningún hueco compatible con las reglas del día.</span><button class="btn sm" data-act="replace-pending">Reubicar en la semana</button><button class="btn sm ghost" data-act="clear-pending">Descartar</button></div>`;
+  out+=balanceBar(days);
+  out+=`<div class="grid"><div class="ghead"><div>Día</div><div>Cole · niñas</div><div>Comida</div><div>Snack · merienda</div><div>Cena · todos</div></div>`;
+  const st=settings(); const hF=(st.diners.find(d=>d.id==="h")||{factor:1}).factor; const mF=(st.diners.find(d=>d.id==="m")||{factor:.9}).factor;
+  for(const d of days){
+    const dt=parseISO(d.date); const di=(dt.getDay()+6)%7; const wk=di>=5;
+    const kc=dayKcal(d); const tH=Math.round(st.diners[0].kcal*0.8);
+    out+=`<div class="row${wk?" weekend":""}${d.lock?" locked":""}">`;
+    out+=`<div class="cell day"><span class="dd">${DOW[di]}</span><span class="dn">${dt.getDate()}</span><button class="btn sm ghost lockbtn" data-act="lock-day" data-date="${d.date}" aria-pressed="${!!d.lock}" title="${d.lock?"Día anclado: no cambia al regenerar":"Anclar este día"}">${d.lock?"🔒 Anclado":"🔓 Anclar"}</button></div>`;
+    // cole
+    if(d.school && d.school.estimado){ const s=d.school;
+      out+=`<div class="cell"><span class="lab">Cole · niñas</span><div class="extra"><i>Sin menú: pauta de semanas anteriores</i></div>
+        <div class="tags">${(s.prot||[]).map(p=>`<span class="tag" style="color:${PROT[p].c}">${PROT[p].l}</span>`).join("")}<span class="tag">${BASES[s.base]||s.base}</span><span class="tag">${s.postreTipo==="lacteo"?"Lácteo":s.postreTipo==="ambos"?"Fruta + lácteo":"Fruta"}</span><span class="tag outtag">Estimado</span></div></div>`;
+    } else if(d.school){ const s=d.school;
+      out+=`<div class="cell"><span class="lab">Cole · niñas</span>
+        ${s.primero?`<div class="dish"><span class="k">1º</span><span>${esc(s.primero)}</span></div>`:""}
+        ${s.segundo?`<div class="dish"><span class="k">2º</span><span>${esc(s.segundo)}</span></div>`:""}
+        ${s.guarnicion?`<div class="extra">+ ${esc(s.guarnicion)}</div>`:""}
+        <div class="tags">${(s.prot||[]).map(p=>`<span class="tag" style="color:${PROT[p].c}">${PROT[p].l}</span>`).join("")}${s.base?`<span class="tag">${BASES[s.base]||s.base}</span>`:""}<span class="tag">${s.postreTipo==="lacteo"?"Lácteo":s.postreTipo==="ambos"?"Fruta + lácteo":"Fruta"}</span></div></div>`;
+    } else out+=`<div class="cell"><span class="lab">Cole · niñas</span><div class="empty-cell">${wk?"Fin de semana: comen todos en casa":(S.school[S.week]&&S.school[S.week].days&&S.school[S.week].days[d.date]&&S.school[S.week].days[d.date].sinCole?"Sin comedor: comen todos en casa":"Sin menú del cole para este día: se planifica comida en casa para todos")}</div></div>`;
+    // comida
+    out+=slotCell(d,"comida", d.school?"Comida · adultos":"Comida · todos", `${balPills(d.comida,"comida")}<div class="extra">+ pan · fruta</div>`);
+    out+=snackMerCell(d);
+    const ch=dinnerChecks(d);
+    out+=slotCell(d,"cena","Cena · todos", `${balPills(d.cena,"cena")}<div class="extra">+ pan · ${d.postre&&d.postre.v==="lacteo"?"yogur natural":"fruta"} <button class="btn sm ghost" data-act="toggle-postre" data-date="${d.date}" title="Cambiar postre">⇄</button></div><div class="checks">${ch.map(c=>`<span class="ck ${c.info?"info":c.ok?"ok":"bad"}">${esc(c.t)}</span>`).join("")}</div>${d.school&&d.school.sug&&!d.school.estimado?`<div class="extra small">Cole recomienda: ${esc(d.school.sug)}</div>`:""}`);
+    out+=`</div>`;
+  }
+  out+=`</div>`;
+  out+=`<div class="legend">${["carne","pblanco","pazul","huevo","legumbre","ninguna"].map(p=>`<span>${dotFor(p)}${PROT[p].l}</span>`).join("")}</div>`;
+  out+=`<div class="rules"><b>Cómo se calcula.</b> Comida de adultos: da preferencia a las recetas marcadas «Adultos», con la misma proteína que el segundo del cole y primero del mismo grupo (legumbre, cereal, patata o verdura). Cena común a toda la familia. Cada semana hay una «Peli y pizza»: el viernes si encaja con la comida del cole, si no el sábado; la cobertura (jamón cocido, atún o huevo) se elige para complementar la comida. Si el cole publica su cena recomendada para ese día, se sigue (base, proteína y postre) siempre que no repita la proteína de la comida; si la repite, o no hay recomendación, se aplica la regla: carne → pescado o huevo; pescado → carne magra o huevo; huevo → pescado o carne; cereal, patata o legumbre → verduras; verdura → cereal o patata; postre lácteo → fruta. Montaje: «primero + segundo», con una guarnición si el segundo va solo, o «primero ligero + plato completo» (los platos completos no ligeros siempre llevan delante una crema, ensalada o salmorejo); un primero no ligero va con un segundo. Las recetas «Adultos» solo salen en la comida de los días de cole, y las de primavera/verano solo de abril a septiembre. Equilibrio: cada comida (primero + segundo, o plato completo) se elige para que tenga proteína, verdura, hidratos (cereal, patata o legumbre) y grasa saludable (aceite de oliva, aguacate, pescado azul…), evitando doble hidrato; en la cena, si el plato no lleva hidratos, los aporta el pan. Snack y merienda de los días de cole: van en fiambrera, así que solo se usan recetas marcadas «Fiambrera» (sin líquidos sueltos; los envasados como Actimel o un brik sí). La de 1 año toma snack y merienda en el cole: los días de cole no se cuenta en esos huecos. El snack es solo para las niñas de 5 y 3 años, y la merienda de la tarde se elige para completar lo que falte del snack entre fruta, lácteo y cereal, sin repetir receta el mismo día. La cena evita repetir el tipo de verdura de la comida (crema a mediodía → ensalada o verdura distinta por la noche, y al revés). Al marcar «coméis fuera», lo previsto pasa al primer hueco compatible de los días siguientes. Niña de 1 año: sin sal añadida, texturas adaptadas, hortaliza cruda rallada o cocida, y nada de pez espada, tiburón, atún rojo ni lucio.</div>`;
+  return out;
+}
+function balPills(slot, meal){
+  const rs=((slot&&slot.ids)||[]).map(R).filter(Boolean); if(!rs.length || (slot&&slot.fuera)) return "";
+  const b=mealBalance(rs);
+  const it=[["Proteína",b.prot],["Verdura",b.veg],[meal==="cena"&&!b.hc?"Hidratos: pan":"Hidratos",b.hc||meal==="cena"],["Grasa sana",b.fat]];
+  return `<div class="bal" title="Equilibrio del plato">${it.map(([l,ok])=>`<span class="bp ${ok?"ok":"bad"}">${ok?"✓":"✗"} ${l}</span>`).join("")}${b.dupHc?`<span class="bp warn">Doble hidrato</span>`:""}</div>`;
+}
+function slotCell(d,key,label,extra){
+  const ed=S.editing; const editing = ed && ed.date===d.date && ed.key===key;
+  const out_=d[key]&&d[key].fuera; const pinned=d[key]&&d[key].pin&&!out_;
+  return `<div class="cell${out_?" out":""}"><span class="lab">${label}</span>
+    ${editing?slotEditor(d,key):(out_?`<div class="dish"><span class="tag outtag">Coméis fuera</span></div>`:dishes(d[key]))}
+    ${!editing&&!out_?extra:""}
+    ${pinned&&!editing&&!d.lock?`<div class="tags"><span class="tag pin">Fijado</span></div>`:""}
+    ${!editing&&!d.lock?`<button class="btn sm ghost editbtn" data-act="edit" data-date="${d.date}" data-key="${key}" aria-label="Cambiar ${label}">✎</button>`:""}</div>`;
+}
+function subSlot(d,key,label){
+  const ed=S.editing; const editing = ed && ed.date===d.date && ed.key===key;
+  return `<div class="sub"><div class="subhead"><span class="sublab">${label}</span>${!editing&&!d.lock?`<button class="btn sm ghost" data-act="edit" data-date="${d.date}" data-key="${key}" aria-label="Cambiar ${label}">✎</button>`:""}</div>
+    ${editing?slotEditor(d,key):dishes(d[key])}${!editing&&d.school&&((d[key]&&d[key].ids)||[]).some(id=>R(id)&&!R(id).llevar)?`<div class="checks"><span class="ck bad">No apta para fiambrera</span></div>`:""}${d[key]&&d[key].pin&&!editing&&!d.lock?`<div class="tags"><span class="tag pin">Fijado</span></div>`:""}</div>`;
+}
+function snackMerCell(d){
+  const hasSnack=!!d.school;
+  return `<div class="cell"><span class="lab">Snack y merienda</span>${hasSnack?subSlot(d,"snack","Snack cole · niñas de 5 y 3"):""}${subSlot(d,"merienda",hasSnack?"Merienda · sin la de 1 año":"Merienda")}</div>`;
+}
+function optList(meal, course, sel, compat){
+  return `<option value="">— ninguno —</option>`+recList().filter(r=>(r.meals||[]).includes(meal)&&r.course===course).map(r=>{
+    const ok = compat ? compat(r) : true;
+    return `<option value="${esc(r.id)}"${r.id===sel?" selected":""}>${ok?"":"⚠ "}${esc(r.name)} · ${r.toppings?"proteína a elegir":PROT[r.protein]?PROT[r.protein].l:""}</option>`;}).join("");
+}
+function slotEditor(d,key){
+  const ids=(d[key]&&d[key].ids)||[]; const f=S.editing.fmt || (ids.some(i=>R(i)&&R(i).course==="completo") ? "c" : (key==="merienda"||key==="snack"?"m":"ps"));
+  const meal = key==="cena"?"cena":key==="merienda"?"merienda":"comida";
+  let compat=null;
+  if(key==="cena"){ const tg=dinnerTarget(d); const al=tg.allowed; const ng=tg.ng;
+    compat = r => r.toppings ? ((!r.dias||r.dias.includes(dowOf(d.date))) && topFor(r,tg).length>0) : (r.protein==="ninguna"||(r.protein==="legumbre"&&ng.need.includes("legumbre"))? true : al.includes(pcat(r.protein))) && (r.course==="segundo" || !ng.need.length || hasG(r,ng.need)); }
+  if(key==="comida" && d.school){ const P=(d.school.prot||[])[0]; compat = r => r.course==="primero" || !P || pcat(r.protein)===pcat(P); }
+  let body="";
+  const lunchbox = key==="snack" || (key==="merienda" && !!d.school);
+  if(lunchbox) compat = r => !!r.llevar;
+  if(key==="merienda"||key==="snack") body=`<select id="ed-m" aria-label="${key==="snack"?"Snack":"Merienda"}">${optList("merienda","merienda",ids[0],compat)}</select>${lunchbox?`<div class="muted small">⚠ = no apta para fiambrera</div>`:""}`;
+  else {
+    body=`<select id="ed-fmt" data-act-change="ed-fmt" aria-label="Formato"><option value="ps"${f==="ps"?" selected":""}>Primero + segundo (+ guarnición)</option><option value="c"${f==="c"?" selected":""}>Ligero + plato completo</option></select>`;
+    const p=ids.find(i=>R(i)&&R(i).course==="primero"), sg=ids.find(i=>R(i)&&R(i).course==="segundo"), c=ids.find(i=>R(i)&&R(i).course==="completo"), g=ids.find(i=>R(i)&&R(i).course==="guarnicion");
+    const lab=t=>`<span class="muted small">${t}</span>`;
+    if(f==="c") body+=`${lab("Primero ligero")}<select id="ed-p" aria-label="Primero ligero">${optList(meal,"primero",p,r=>r.ligero===true)}</select>${lab("Plato completo")}<select id="ed-c" aria-label="Plato completo">${optList(meal,"completo",c,compat)}</select>`;
+    else body+=`${lab("Primero")}<select id="ed-p" aria-label="Primero">${optList(meal,"primero",p,compat)}</select>${lab("Segundo")}<select id="ed-s" aria-label="Segundo">${optList(meal,"segundo",sg,compat)}</select>${lab("Guarnición (opcional)")}<select id="ed-g" aria-label="Guarnición">${optList(meal,"guarnicion",g,null)}</select>`;
+  }
+  const isOut=d[key]&&d[key].fuera;
+  return `<div class="editor">${isOut?`<div class="small">Marcado como «coméis fuera».</div>`:body+`<div class="muted small">⚠ = no cumple las reglas del día</div>`}<div class="acts">${isOut?`<button class="btn sm primary" data-act="ed-home">Coméis en casa</button>`:`<button class="btn sm primary" data-act="ed-save">Fijar</button><button class="btn sm" data-act="ed-auto">Automático</button>${key!=="merienda"&&key!=="snack"?`<button class="btn sm" data-act="ed-out" title="Lo previsto se reubica en otro día compatible">Coméis fuera</button>`:""}`}<button class="btn sm ghost" data-act="ed-cancel">Cancelar</button></div></div>`;
+}
+
+/* ----- cole ----- */
+function renderSchool(){
+  const w=S.week; const doc=S.school[w]||{weekId:w,days:{}};
+  const dates=weekDates(w).slice(0,5);
+  let out=`<div class="sec-h"><div><h2>Menú del cole · semana del ${fmtShort(w)}</h2><div class="muted small">La clasificación de proteína, base y postre es lo que usa el planificador. Revísala.</div></div><div class="bar"><button class="btn primary" data-act="school-save">Guardar semana</button>${S.school[w]?`<button class="btn danger ghost" data-act="school-del">Borrar semana</button>`:""}</div></div>`;
+  const ws=Object.keys(S.school).sort();
+  if(ws.length) out+=`<div class="weeks-list"><span class="muted small">Semanas cargadas:</span>${ws.map(x=>`<button class="chip" aria-pressed="${x===w}" data-act="goto-week" data-week="${x}">${fmtShort(x)}</button>`).join("")}</div>`;
+  out+=`<div class="sgrid">`;
+  dates.forEach((date,i)=>{
+    const s=doc.days&&doc.days[date]||{}; const pr=s.prot||[];
+    out+=`<div class="sday" data-date="${date}"><h3>${DOW[i]} ${fmtShort(date)}</h3>
+      <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="sc-no-${date}" ${s.sinCole?"checked":""}> Sin comedor (festivo)</label>
+      <label class="f">Primero<input type="text" id="sc-p-${date}" value="${esc(s.primero||"")}"></label>
+      <label class="f">Segundo<input type="text" id="sc-s-${date}" value="${esc(s.segundo||"")}"></label>
+      <label class="f">Guarnición<input type="text" id="sc-g-${date}" value="${esc(s.guarnicion||"")}"></label>
+      <label class="f">Postre<input type="text" id="sc-d-${date}" value="${esc(s.postre||"")}"></label>
+      <div class="f small" style="font-weight:600;color:var(--muted)">Proteínas (la primera es la del segundo plato)</div>
+      <div class="chips" id="sc-prot-${date}" data-order="${esc(pr.join(","))}">${["carne","pblanco","pazul","huevo","legumbre"].map(p=>`<button class="chip" type="button" data-act="sc-prot" data-date="${date}" data-p="${p}" aria-pressed="${pr.includes(p)}" style="${pr.includes(p)?`color:${PROT[p].c}`:""}">${dotFor(p)}${PROT[p].l}${pr[0]===p&&pr.length>1?" · 2º":""}</button>`).join("")}</div>
+      <div class="frow"><label class="f">Base del primero<select id="sc-b-${date}">${Object.entries(BASES).map(([k,l])=>`<option value="${k}"${s.base===k?" selected":""}>${l}</option>`).join("")}</select></label>
+      <label class="f">Tipo de postre<select id="sc-dt-${date}"><option value="fruta"${(s.postreTipo||"fruta")==="fruta"?" selected":""}>Fruta</option><option value="lacteo"${s.postreTipo==="lacteo"?" selected":""}>Lácteo</option><option value="ambos"${s.postreTipo==="ambos"?" selected":""}>Fruta + lácteo</option></select></label></div>
+      <label class="f">Cena recomendada por el cole<input type="text" id="sc-sug-${date}" placeholder="Verduras cocinadas · pescado blanco · pan, fruta" value="${esc(s.sug||"")}"></label>
+      ${s.nota?`<div class="small" style="color:var(--warn)">${esc(s.nota)}</div>`:""}
+    </div>`;
+  });
+  out+=`</div>`;
+  out+=`<div class="panel"><h2>Cargar un menú nuevo</h2><p class="muted small">Escribe cada día en las fichas de arriba y pulsa «Guardar semana», o importa un archivo JSON de menú desde Ajustes → «Importar archivo JSON».</p></div>`;
+  return out;
+}
+
+/* ----- recetas ----- */
+function renderRecipes(){
+  const f=S.recFilter; const q=f.q.trim().toLowerCase();
+  const list=recList().filter(r=>(!f.meal||(r.meals||[]).includes(f.meal))&&(!f.course||r.course===f.course)&&(!f.prot||r.protein===f.prot)&&(!q||r.name.toLowerCase().includes(q))&&(!f.h||r.harvard)&&(!f.a||r.adultos));
+  const cov = {}; ["comida","cena"].forEach(m=>["carne","pblanco","pazul","huevo","legumbre"].forEach(p=>{cov[m+p]=recList().filter(r=>(r.meals||[]).includes(m)&&r.protein===p&&r.course!=="primero").length;}));
+  let out=`<div class="sec-h"><div><h2>Recetario</h2><div class="muted small">${recList().length} recetas.</div></div><div class="bar">${S.sample?`<button class="btn" data-act="ai-open">Sugerir recetas con Claude</button>`:""}<button class="btn primary" data-act="new-rec">Nueva receta</button></div></div>`;
+  out+=`<div class="filters"><input type="text" id="rf-q" placeholder="Buscar…" value="${esc(f.q)}" aria-label="Buscar receta">
+    <select id="rf-meal" aria-label="Comida"><option value="">Todas las tomas</option>${Object.entries(MEALS).map(([k,l])=>`<option value="${k}"${f.meal===k?" selected":""}>${l}</option>`).join("")}</select>
+    <select id="rf-course" aria-label="Tipo"><option value="">Todos los tipos</option>${Object.entries(COURSES).map(([k,l])=>`<option value="${k}"${f.course===k?" selected":""}>${l}</option>`).join("")}</select>
+    <select id="rf-prot" aria-label="Proteína"><option value="">Todas las proteínas</option>${Object.entries(PROT).map(([k,v])=>`<option value="${k}"${f.prot===k?" selected":""}>${v.l}</option>`).join("")}</select><label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="rf-h" ${f.h?"checked":""}> Solo plato de Harvard</label><label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="rf-a" ${f.a?"checked":""}> Solo adultos</label></div>`;
+  out+=`<div class="tscroll" style="margin-top:12px"><table class="port" style="max-width:640px"><tr><th>Platos con proteína</th>${["carne","pblanco","pazul","huevo","legumbre"].map(p=>`<th>${PROT[p].l}</th>`).join("")}</tr>${["comida","cena"].map(m=>`<tr><td>${MEALS[m]}</td>${["carne","pblanco","pazul","huevo","legumbre"].map(p=>`<td class="mono" style="${cov[m+p]<2?"color:var(--warn);font-weight:600":""}">${cov[m+p]}</td>`).join("")}</tr>`).join("")}</table></div>`;
+  out+=`<div class="rgrid">${list.map(r=>`<button class="rcard" data-act="view-rec" data-id="${esc(r.id)}"><span class="nm">${esc(r.name)}</span>
+    <span class="meta">${r.harvard?`<span class="tag harv">Plato Harvard</span>`:""}${r.llevar?`<span class="tag harv">Fiambrera</span>`:""}${r.adultos?`<span class="tag harv">Adultos</span>`:""}${r.ligero===true?`<span class="tag">Ligero</span>`:r.ligero===false?`<span class="tag">No ligero</span>`:""}${r.temporada?`<span class="tag">Primavera/verano</span>`:""}<span class="tag" style="color:${(PROT[r.protein]||PROT.ninguna).c}">${(PROT[r.protein]||PROT.ninguna).l}</span><span class="tag">${COURSES[r.course]||""}</span>${(r.meals||[]).map(m=>`<span class="tag">${MEALS[m]}</span>`).join("")}</span>
+    <span class="muted small">${(r.groups||[]).map(g=>GROUPS[g]).join(" · ")}</span></button>`).join("") || `<p class="muted">Ninguna receta coincide con el filtro.</p>`}</div>`;
+  return out;
+}
+
+/* ----- ingredientes ----- */
+const UNITS = ["g","kg","ml","l","ud","uds","unidad","unidades","env","envase","envases","cda","cdas","cdta","cdtas","diente","dientes","rebanada","rebanadas","hoja","hojas","pizca"];
+function parseIng(line){
+  const m=String(line).trim().match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-ZáéíóúñÁÉÍÓÚÑ]+)?\.?\s+(?:de\s+)?(.+)$/);
+  if(m){ let u=(m[2]||"").toLowerCase(); let name=m[3];
+    if(u && !UNITS.includes(u)){ name=(m[2]+" "+m[3]); u="ud"; }
+    if(!u) u="ud"; if(u==="uds"||u==="unidad"||u==="unidades") u="ud"; if(u==="envase"||u==="envases") u="env"; if(u==="kg"){return {q:parseFloat(m[1].replace(",","."))*1000,u:"g",n:name.trim()};} if(u==="l"){return {q:parseFloat(m[1].replace(",","."))*1000,u:"ml",n:name.trim()};}
+    return {q:parseFloat(m[1].replace(",",".")),u,n:name.trim()}; }
+  return {q:null,u:"",n:String(line).trim()};
+}
+const qty = (p, factor, persons) => p.u==="env" ? p.q*persons : p.q*factor;
+const fmtQ = (q,u) => { if(q==null) return ""; if(u==="env"){ const r=Math.ceil(q); return `${r} envase${r===1?"":"s"}`; } if(u==="g"||u==="ml"){ return (q>=1000? (Math.round(q/100)/10).toLocaleString("es")+(u==="g"?" kg":" l") : Math.round(q/5)*5+" "+u); } const r=Math.round(q*4)/4; return `${r.toLocaleString("es")} ${u}`; };
+function mealDiners(key, d){ const st=settings(); if(key==="cena") return allIds();
+  /* La de 1 año (n1) recibe snack y merienda en el cole: solo se excluye los días de cole */
+  const cole = d && d.school; const sinBebe = ids => cole ? ids.filter(i=>i!=="n1") : ids;
+  if(key==="snack") return allIds().filter(i=>i.startsWith("n")&&i!=="n1");
+  if(key==="merienda") return sinBebe(st.meriendaFor==="ninas"?allIds().filter(i=>i.startsWith("n")):allIds());
+  return cole?adultIds():allIds(); }
+
+/* ----- compra ----- */
+function renderShop(){
+  const w=S.week; const {plan,draft}=currentPlan();
+  const pl=pantryList();
+  const pantryPanel=`<div class="panel"><h2>Lo que tengo en casa</h2><p class="muted small">Uno por línea. Basta la palabra clave: «tomate» encaja con «tomate triturado». Lo que tengas sale aparte en la lista y «Con lo que tengo» prioriza recetas que lo aprovechen.</p>
+    <textarea id="pantry-text" rows="5" placeholder="Garbanzos&#10;Calabacín&#10;Huevos&#10;Arroz integral">${esc(((S.pantry&&S.pantry.items)||[]).join("\n"))}</textarea>
+    <div class="bar" style="margin-top:8px"><button class="btn" data-act="save-pantry">Guardar</button><button class="btn primary" data-act="save-pantry-gen">Guardar y generar la semana</button>${pl.length?`<button class="btn ghost" data-act="clear-pantry">Vaciar</button>`:""}</div></div>`;
+  if(!plan) return `<div class="panel"><h2>No hay menú para esta semana</h2><p class="muted">Carga el menú del cole y genera la semana para obtener la lista.</p></div>`+pantryPanel;
+  const agg={}; const days=planDays(plan); const free=[];
+  for(const d of days) for(const key of ["snack","comida","merienda","cena"]){
+    if(d[key]&&d[key].fuera) continue;
+    const md=mealDiners(key,d); const f=fsum(md);
+    (d[key]&&d[key].ids||[]).map(R).filter(Boolean).forEach(r=>(r.ingredients||[]).concat(r.toppings&&d[key].top&&r.toppings[d[key].top]?[r.toppings[d[key].top]]:[]).forEach(line=>{ const p=parseIng(line); if(p.q==null){ if(!free.includes(p.n)) free.push(p.n); return;} const k=p.n.toLowerCase()+"|"+p.u; agg[k]=agg[k]||{n:p.n,u:p.u,q:0}; agg[k].q+=qty(p,f,md.length); }));
+  }
+  const nb=days.reduce((a,d)=>a+(d.postre&&d.postre.v==="lacteo"&&!(d.cena&&d.cena.fuera)?1:0),0);
+  const all=Object.values(agg).sort((a,b)=>a.n.localeCompare(b.n,"es")).concat(free.sort((a,b)=>a.localeCompare(b,"es")).map(n=>({n,u:"",q:null})));
+  const buy=all.filter(it=>!inPantry(it.n,pl)), have=all.filter(it=>inPantry(it.n,pl));
+  const ticks=loadTicks(w);
+  const row=(it,i,pre)=>{const id=pre+i; const key=it.n+"|"+it.u; return `<label for="${id}"><input type="checkbox" id="${id}" data-act-change="tick" data-k="${esc(key)}" ${ticks[key]?"checked":""}><span>${esc(it.n)}</span><span class="q">${it.q==null?"al gusto":fmtQ(it.q,it.u)}</span></label>`;};
+  let out=`<div class="sec-h"><div><h2>Lista de compra · semana del ${fmtShort(w)}</h2><div class="muted small">${draft?"Basada en la propuesta sin guardar. ":""}Cantidades para todos los comensales de cada toma (incluye comida de adultos en días de cole; no cuenta lo que coméis fuera). No incluye desayunos.</div></div><div class="bar"><button class="btn ghost" data-act="untick-all">Desmarcar todo</button><button class="btn" data-act="copy-shop">Copiar lista</button></div></div>`;
+  out+=`<div class="panel"><h2>Comprar</h2><div class="shop">${buy.map((it,i)=>row(it,i,"sb-")).join("")||`<p class="muted">Nada: lo tienes todo.</p>`}</div>
+  <p class="muted small" style="margin-top:12px">Además: pan para comida y cena, fruta de temporada para postres y ${nb} día${nb===1?"":"s"} de yogur natural en la cena.</p></div>`;
+  if(have.length) out+=`<div class="panel"><h2>Ya lo tienes en casa</h2><p class="muted small">Comprueba que llega la cantidad.</p><div class="shop">${have.map((it,i)=>row(it,i,"sh-")).join("")}</div></div>`;
+  out+=pantryPanel;
+  S._shopText = buy.map(it=>`- ${it.n}${it.q==null?"":": "+fmtQ(it.q,it.u)}`).join("\n");
+  return out;
+}
+function loadTicks(w){ try{ return JSON.parse(localStorage.getItem("mf-ticks-"+w)||"{}"); }catch(e){ return {}; } }
+function saveTicks(w,t){ try{ localStorage.setItem("mf-ticks-"+w, JSON.stringify(t)); }catch(e){} }
+
+/* ----- ajustes ----- */
+function renderSettings(){
+  const st=settings();
+  let out=`<div class="sec-h"><div><h2>Ajustes</h2></div><button class="btn primary" data-act="save-settings">Guardar ajustes</button></div>`;
+  out+=`<div class="panel"><h2>Estructura</h2><div class="frow">
+    <label class="f">Comida de adultos (días de cole)<select id="st-fmt"><option value="alternar"${st.adultFormat==="alternar"?" selected":""}>Alternar primero+segundo y plato completo</option><option value="ps"${st.adultFormat==="ps"?" selected":""}>Siempre primero + segundo</option><option value="completo"${st.adultFormat==="completo"?" selected":""}>Siempre plato completo</option></select></label>
+    <label class="f">Peli y pizza<select id="st-pizza"><option value="si"${st.pizza!=="no"?" selected":""}>Cada semana, viernes o sábado</option><option value="no"${st.pizza==="no"?" selected":""}>No incluir automáticamente</option></select></label>
+    <label class="f">Días sin menú del cole<select id="st-nos"><option value="pauta"${st.noSchool==="pauta"?" selected":""}>Estimar con la pauta de semanas anteriores</option><option value="casa"${st.noSchool==="casa"?" selected":""}>Planificar comida en casa para todos</option></select></label>
+    <label class="f">Merienda para<select id="st-mer"><option value="todos"${st.meriendaFor==="todos"?" selected":""}>Toda la familia</option><option value="ninas"${st.meriendaFor==="ninas"?" selected":""}>Solo las niñas</option></select></label></div></div>`;
+  const K=knowledge(null);
+  const topF=Object.entries(K.freq).filter(([id])=>R(id)).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const topP=Object.entries(K.pair).map(([k,n])=>[k.split("|"),n]).filter(([[a,b]])=>R(a)&&R(b)).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const learnPanel=`<div class="panel"><h2>Aprendizaje</h2><p class="muted small">El generador da un pequeño empujón a las recetas que más repetís y a las combinaciones de primero y segundo habituales. Aprende solo de las semanas guardadas y de los menús que importes. La variedad y las reglas del cole siguen mandando.</p>
+    <div class="stat-row"><div class="stat"><b>${K.meals}</b><span class="muted small">comidas aprendidas</span></div><div class="stat"><b>${Object.keys(K.pair).length}</b><span class="muted small">combinaciones</span></div></div>
+    ${topF.length?`<p class="small" style="margin-top:10px"><b>Más frecuentes:</b> ${topF.map(([id,n])=>`${esc(R(id).name)} (${n})`).join(" · ")}</p>`:""}
+    ${topP.length?`<p class="small"><b>Combinaciones habituales:</b> ${topP.map(([[a,b],n])=>`${esc(R(a).name)} + ${esc(R(b).name)} (${n})`).join(" · ")}</p>`:""}
+    ${S.knowledge&&S.knowledge.meals?`<div class="bar"><button class="btn ghost danger" data-act="reset-know">Olvidar lo importado</button></div>`:""}</div>`;
+  const backupPanel=`<div class="panel"><h2>Copia de seguridad e importación</h2><p class="muted small">Tus datos ya se guardan solos. La copia sirve para conservarlos aparte o llevarlos a otro sitio. También puedes importar una copia del planificador anterior («Guardar copia») o un JSON de menús con la forma {"menus":[{"dia":"lunes","comida":["Plato A","Plato B"],"cena":["Plato C"]}]}: añade sus recetas que no tengas y aprende vuestras combinaciones.</p>
+    <div class="bar">${S.downloads?`<button class="btn" data-act="export">Descargar copia</button>`:""}<label class="btn" for="imp-file" style="cursor:pointer">Importar archivo JSON</label><input type="file" id="imp-file" accept="application/json,.json" hidden></div></div>`;
+  out+=`<div class="panel"><h2>Raciones por semana (comida + cena)</h2><p class="muted small">Rangos orientativos para 14 tomas. El generador intenta quedarse dentro.</p><div class="frow">${[["carne","Carne (preferible magra/blanca)"],["pescado","Pescado"],["pazul","De ellas, pescado azul"],["huevo","Huevo"],["legumbre","Legumbre"]].map(([k,l])=>`<label class="f">${l}<span style="display:flex;gap:6px;align-items:center"><input type="number" id="st-t0-${k}" value="${st.targets[k][0]}" style="width:64px"> a <input type="number" id="st-t1-${k}" value="${st.targets[k][1]}" style="width:64px"></span></label>`).join("")}</div></div>`;
+  out+=learnPanel+backupPanel;
+  return out;
+}
+
+/* ---------- modales ---------- */
+function openModal(html){ $("#modal-root").innerHTML=`<div class="overlay" data-act="close-modal-bg"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`; const f=$("#modal-root .modal input, #modal-root .modal button"); if(f) f.focus(); }
+function closeModal(){ $("#modal-root").innerHTML=""; S._confirmDel=false; }
+function viewRecipe(id){
+  const r=R(id); if(!r) return; const st=settings();
+  const rows=(r.ingredients||[]).map(parseIng);
+  openModal(`<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><h2>${esc(r.name)}</h2><button class="btn icon ghost" data-act="close-modal" aria-label="Cerrar">✕</button></div>
+    <div class="tags">${r.harvard?`<span class="tag harv">Plato Harvard: ½ verdura · ¼ cereal integral · ¼ proteína</span>`:""}<span class="tag" style="color:${(PROT[r.protein]||PROT.ninguna).c}">${(PROT[r.protein]||PROT.ninguna).l}</span><span class="tag">${COURSES[r.course]}</span>${(r.meals||[]).map(m=>`<span class="tag">${MEALS[m]}</span>`).join("")}${(r.groups||[]).map(g=>`<span class="tag">${GROUPS[g]}</span>`).join("")}</div>
+    ${(r.course!=="merienda")?balPills({ids:[r.id]}, (r.meals||[]).includes("comida")?"comida":"cena"):""}
+    ${rows.length?`<div><h3 style="font-size:17px;margin-bottom:4px">Ingredientes</h3><ul style="margin:0;padding-left:20px">${rows.map(p=>`<li>${esc(p.n)}</li>`).join("")}</ul></div>`:""}
+    ${r.toppings?`<div class="notice info" style="margin-top:0"><span class="grow"><b>Proteína según el día:</b> ${Object.entries(r.toppings).map(([p,l])=>`${PROT[p]?PROT[p].l:p}: ${esc(l)}`).join(" · ")}. El planificador elige la que complementa la comida.${r.dias?` Solo ${r.dias.map(i=>["lunes","martes","miércoles","jueves","viernes","sábado","domingo"][i]).join(" o ")}.`:""}</span></div>`:""}
+    ${r.steps?`<div><h3 style="font-size:17px;margin-bottom:4px">Preparación</h3><div style="white-space:pre-wrap">${esc(r.steps)}</div></div>`:""}
+    ${r.kids?`<div class="notice info" style="margin-top:0"><span class="grow"><b>Para las niñas:</b> ${esc(r.kids)}</span></div>`:""}
+    ${r.link&&/^https?:\/\//i.test(r.link)?`<a href="${esc(r.link)}" target="_blank" rel="noopener" class="small" style="color:var(--accent)">Ver la receta original ↗</a>`:""}
+    <div class="bar"><button class="btn primary" data-act="edit-rec" data-id="${esc(id)}">Editar</button><button class="btn" data-act="dup-rec" data-id="${esc(id)}">Duplicar</button></div>`);
+}
+function editRecipe(id, dup){
+  const r = id ? {...R(id)} : {name:"",meals:["cena"],course:"segundo",protein:"pblanco",groups:[],kcal:"",ingredients:[],steps:"",kids:""};
+  if(dup){ r.name=r.name+" (copia)"; }
+  const editing = id && !dup;
+  openModal(`<div style="display:flex;justify-content:space-between;gap:10px"><h2>${editing?"Editar receta":"Nueva receta"}</h2><button class="btn icon ghost" data-act="close-modal" aria-label="Cerrar">✕</button></div>
+   <label class="f">Nombre<input type="text" id="re-name" value="${esc(r.name)}"></label>
+   <div class="f" style="font-size:12px;font-weight:600;color:var(--muted)">Se usa en</div><div class="cbx">${Object.entries(MEALS).map(([k,l])=>`<label><input type="checkbox" id="re-m-${k}" ${(r.meals||[]).includes(k)?"checked":""}> ${l}</label>`).join("")}</div>
+   <div class="frow"><label class="f">Tipo de plato<select id="re-course">${Object.entries(COURSES).map(([k,l])=>`<option value="${k}"${r.course===k?" selected":""}>${l}</option>`).join("")}</select></label>
+   <label class="f">Proteína principal<select id="re-prot">${Object.entries(PROT).map(([k,v])=>`<option value="${k}"${r.protein===k?" selected":""}>${v.l}</option>`).join("")}</select></label>
+</div>
+   <div class="f" style="font-size:12px;font-weight:600;color:var(--muted)">Grupos de alimentos que aporta</div><div class="cbx">${Object.entries(GROUPS).map(([k,l])=>`<label><input type="checkbox" id="re-g-${k}" ${(r.groups||[]).includes(k)?"checked":""}> ${l}</label>`).join("")}</div>
+   <label class="f">Ingredientes (uno por línea; incluye la grasa, p. ej. «aceite de oliva», para que cuente en el equilibrio)<textarea id="re-ing" rows="6">${esc((r.ingredients||[]).join("\n"))}</textarea></label>
+   <label class="f">Preparación<textarea id="re-steps" rows="4">${esc(r.steps||"")}</textarea></label>
+   <label class="f">Enlace a la receta original (opcional)<input type="text" id="re-link" inputmode="url" placeholder="https://…" value="${esc(r.link||"")}"></label>
+   <label class="f">Adaptación para las niñas<input type="text" id="re-kids" value="${esc(r.kids||"")}"></label>
+   <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="re-ligero" ${r.ligero?"checked":""}> Ligero (crema, ensalada, salmorejo…). Un plato completo no ligero siempre lleva un primero ligero delante</label>
+   <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="re-temp" ${r.temporada?"checked":""}> Solo primavera y verano (abril a septiembre)</label>
+   <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="re-adultos" ${r.adultos?"checked":""}> Solo adultos (para la comida de los días de cole; no se usa cuando come toda la familia)</label>
+   <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="re-llevar" ${r.llevar?"checked":""}> Apta para fiambrera del cole (sin líquidos sueltos: solo envasados como Actimel o brik; aguanta sin nevera; sin frutos secos; fácil de comer)</label>
+   <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="re-harv" ${r.harvard?"checked":""}> Sigue el plato de Harvard (½ verdura, ¼ cereal integral, ¼ proteína)</label>
+   <div class="bar"><button class="btn primary" data-act="save-rec" data-id="${editing?esc(id):""}">Guardar receta</button>${editing?`<button class="btn danger" data-act="del-rec" data-id="${esc(id)}">${S._confirmDel?"Confirmar: eliminar":"Eliminar"}</button>`:""}</div>`);
+}
+
+/* ---------- persistencia ---------- */
+async function put(path, data){
+  if(!S.db){ return false; }
+  try{ await S.db.doc(path).set(data); return true; }
+  catch(e){ if(e&&e.code==="unavailable"){ await new Promise(r=>setTimeout(r,600+Math.random()*600)); try{ await S.db.doc(path).set(data); return true; }catch(e2){} }
+    toast(e&&e.code==="quota_exceeded"?"Almacenamiento lleno: borra recetas o semanas antiguas.":"No se pudo guardar. Inténtalo de nuevo."); return false; }
+}
+async function del(path){ if(!S.db) return false; try{ await S.db.doc(path).delete(); return true; }catch(e){ toast("No se pudo borrar."); return false; } }
+async function savePlan(plan){
+  plan.updated=Date.now(); plan.generated=undefined; delete plan.generated;
+  S.plans[plan.weekId]=plan; render();
+  if(await put("plans/"+plan.weekId, JSON.parse(JSON.stringify(plan)))) toast("Menú guardado");
+}
+
+/* ---------- acciones ---------- */
+async function regenWith(opts, mutate){
+  const {plan}=currentPlan(); const np=JSON.parse(JSON.stringify(plan)); if(mutate) mutate(np);
+  const g=generateWeek(S.week, String(Date.now()), np, {pending:np.pending||[], ...opts});
+  await savePlan(g); return g;
+}
+function setWeek(w){ S.week=w; S.editing=null; S.weekNotice=""; render(); }
+document.addEventListener("click", async ev => {
+  const t=ev.target.closest("[data-act]"); if(!t) return;
+  const a=t.dataset.act;
+  if(a==="close-modal-bg"){ if(ev.target===t) closeModal(); return; }
+  if(t.tagName==="A") ev.preventDefault();
+  switch(a){
+    case "tab": S.tab=t.dataset.tab; S.editing=null; render(); break;
+    case "wk-prev": setWeek(addDays(S.week,-7)); break;
+    case "wk-next": setWeek(addDays(S.week,7)); break;
+    case "wk-today": setWeek(mondayOf(iso(new Date()))); break;
+    case "wk-latest": { const ws=Object.keys(S.school).sort(); if(ws.length) setWeek(ws[ws.length-1]); break; }
+    case "goto-week": setWeek(t.dataset.week); break;
+    case "dismiss-notice": S.weekNotice=""; render(); break;
+    case "save-draft": { const {plan}=currentPlan(); if(plan) await savePlan(JSON.parse(JSON.stringify(plan))); break; }
+    case "regen": await regenWith({}); toast("Semana regenerada"); break;
+    case "add-snacks": await regenWith({onlyKey:"snack"}); toast("Snacks añadidos"); break;
+    case "replan-today": await regenWith({freezeBefore:iso(new Date())}); toast("Replanificado desde hoy"); break;
+    case "regen-pantry": {
+      if(!pantryList().length){ toast("No hay despensa guardada."); break; }
+      S.tab="semana"; const t0=iso(new Date()); await regenWith({pantry:true, freezeBefore: weekDates(S.week).includes(t0)?t0:null}); toast("Menú rehecho priorizando lo que tienes"); break; }
+    case "replace-pending": { const t0=iso(new Date()); const g=await regenWith({freezeBefore: weekDates(S.week).includes(t0)?t0:null}); const n=(g.pending||[]).length; toast(n?`Quedan ${n} sin hueco compatible`:"Todo reubicado"); break; }
+    case "clear-pending": { const {plan}=currentPlan(); const np=JSON.parse(JSON.stringify(plan)); np.pending=[]; await savePlan(np); break; }
+    case "lock-day": { const {plan}=currentPlan(); const np=JSON.parse(JSON.stringify(plan)); const d=np.days.find(x=>x.date===t.dataset.date); d.lock=!d.lock; await savePlan(np); toast(d.lock?"Día anclado":"Día desanclado"); break; }
+    case "ed-out": case "ed-home": {
+      const {date,key}=S.editing; S.editing=null;
+      await regenWith({freezeBefore:date, freezeSlot:SLOT_ORDER[key]+(a==="ed-out"?1:0)}, np=>{
+        const d=np.days.find(x=>x.date===date); const old=(d[key]&&!d[key].fuera&&d[key].ids)||[];
+        if(a==="ed-out"){ np.pending=[...new Set([...(np.pending||[]), ...old])]; d[key]={ids:[],pin:true,fuera:true}; }
+        else d[key]={ids:[],pin:false};
+      });
+      toast(a==="ed-out"?"Coméis fuera: lo previsto se ha reubicado":"Hueco replanificado"); break; }
+    case "edit": S.editing={date:t.dataset.date,key:t.dataset.key}; render(); break;
+    case "ed-cancel": S.editing=null; render(); break;
+    case "ed-save": case "ed-auto": {
+      const {plan}=currentPlan(); const np=JSON.parse(JSON.stringify(plan)); const {date,key}=S.editing;
+      const d=np.days.find(x=>x.date===date);
+      if(a==="ed-auto"){ d[key]={...(d[key]||{}),pin:false}; if(key==="cena") d.postre={...(d.postre||{}),pin:false}; S.editing=null; const g=generateWeek(S.week,String(Date.now()),np,{only:{date,key},pending:np.pending||[]}); await savePlan(g); break; }
+      let ids=[];
+      if(key==="merienda"||key==="snack") ids=[$("#ed-m").value];
+      else if($("#ed-fmt").value==="c") ids=[$("#ed-p").value,$("#ed-c").value];
+      else ids=[$("#ed-p").value,$("#ed-s").value,$("#ed-g").value];
+      ids=ids.filter(Boolean);
+      d[key]={ids,pin:true,kind:d[key]&&d[key].kind};
+      const rt=ids.map(R).find(r=>r&&r.toppings); if(rt){ const dd={...d, school:schoolDay(d.date)}; const tops=topFor(rt,dinnerTarget(dd)); d[key].top=tops[0]||Object.keys(rt.toppings)[0]; }
+      S.editing=null; await savePlan(np); break; }
+    case "toggle-postre": { const {plan}=currentPlan(); const np=JSON.parse(JSON.stringify(plan)); const d=np.days.find(x=>x.date===t.dataset.date); d.postre={v:(d.postre&&d.postre.v==="lacteo")?"fruta":"lacteo",pin:true}; await savePlan(np); break; }
+    case "view-rec": viewRecipe(t.dataset.id); break;
+    case "new-rec": editRecipe(null); break;
+    case "edit-rec": S._confirmDel=false; editRecipe(t.dataset.id); break;
+    case "dup-rec": editRecipe(t.dataset.id, true); break;
+    case "close-modal": closeModal(); break;
+    case "save-rec": {
+      const name=$("#re-name").value.trim(); if(!name){ toast("Ponle un nombre a la receta."); $("#re-name").focus(); return; }
+      const meals=Object.keys(MEALS).filter(k=>$("#re-m-"+k).checked); if(!meals.length){ toast("Marca al menos una toma: comida, cena o merienda."); return; }
+      const id=t.dataset.id || ("r"+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+      const rec={...(t.dataset.id&&S.recipes[t.dataset.id]?S.recipes[t.dataset.id]:{}), id,name,meals,course:$("#re-course").value,protein:$("#re-prot").value,groups:Object.keys(GROUPS).filter(k=>$("#re-g-"+k).checked),
+        ingredients:$("#re-ing").value.split("\n").map(s=>s.trim()).filter(Boolean), steps:$("#re-steps").value.trim(), kids:$("#re-kids").value.trim(), harvard:$("#re-harv").checked, llevar:$("#re-llevar").checked, adultos:$("#re-adultos").checked, ligero:["primero","completo"].includes($("#re-course").value)?$("#re-ligero").checked:null, temporada:$("#re-temp").checked?[4,5,6,7,8,9]:null, link:(/^https?:\/\//i.test($("#re-link").value.trim())?$("#re-link").value.trim():""), updated:Date.now()};
+      S.recipes[id]=rec; closeModal(); render(); if(await put("recipes/"+id, rec)) toast("Receta guardada"); break; }
+    case "del-rec": {
+      if(!S._confirmDel){ S._confirmDel=true; t.textContent="Confirmar: eliminar"; return; }
+      const id=t.dataset.id; delete S.recipes[id]; closeModal(); render(); if(await del("recipes/"+id)) toast("Receta eliminada"); break; }
+    case "sc-prot": {
+      const box=t.closest(".chips"); let order=(box.dataset.order||"").split(",").filter(Boolean); const p=t.dataset.p;
+      order = order.includes(p) ? order.filter(x=>x!==p) : [...order,p];
+      box.dataset.order=order.join(",");
+      box.querySelectorAll(".chip").forEach(c=>{ const on=order.includes(c.dataset.p); c.setAttribute("aria-pressed",String(on)); c.style.color=on?PROT[c.dataset.p].c:""; c.innerHTML=`${dotFor(c.dataset.p)}${PROT[c.dataset.p].l}${order[0]===c.dataset.p&&order.length>1?" · 2º":""}`; });
+      break; }
+    case "school-save": {
+      const w=S.week; const old=S.school[w]||{days:{}}; const days={...(old.days||{})};
+      weekDates(w).slice(0,5).forEach(date=>{
+        const prev=days[date]||{};
+        const v={...prev, primero:$("#sc-p-"+date).value.trim(), segundo:$("#sc-s-"+date).value.trim(), guarnicion:$("#sc-g-"+date).value.trim(), postre:$("#sc-d-"+date).value.trim(),
+          prot:($("#sc-prot-"+date).dataset.order||"").split(",").filter(Boolean), base:$("#sc-b-"+date).value, postreTipo:$("#sc-dt-"+date).value, sug:$("#sc-sug-"+date).value.trim(), sinCole:$("#sc-no-"+date).checked};
+        if(v.primero||v.segundo||v.sinCole) days[date]=v; else delete days[date];
+      });
+      const doc={weekId:w, days, updated:Date.now()}; S.school[w]=doc; render(); if(await put("school/"+w, doc)) toast("Menú del cole guardado"); break; }
+    case "school-del": {
+      if(!S._confirmSDel){ S._confirmSDel=true; t.textContent="Confirmar: borrar semana"; setTimeout(()=>S._confirmSDel=false,4000); return; }
+      S._confirmSDel=false; const w=S.week; delete S.school[w]; render(); if(await del("school/"+w)) toast("Semana borrada"); break; }
+    case "import": await doImport(); break;
+    case "untick-all": saveTicks(S.week,{}); render(); break;
+    case "ai-open": S.aiProps=null; aiModal(); break;
+    case "ai-run": await aiRun(); break;
+    case "ai-add": await aiAdd(); break;
+    case "export": await exportBackup(); break;
+    case "reset-know": S.knowledge={freq:{},pair:{},meals:0,updated:Date.now()}; await put("settings/knowledge", S.knowledge); render(); toast("Aprendizaje importado olvidado"); break;
+    case "save-pantry": case "save-pantry-gen": case "clear-pantry": {
+      const items = a==="clear-pantry" ? [] : ($("#pantry-text").value||"").split("\n").map(x=>x.trim()).filter(Boolean);
+      S.pantry={items, updated:Date.now()}; await put("settings/pantry", S.pantry);
+      if(a==="save-pantry-gen" && items.length && currentPlan().plan){ S.tab="semana"; const t0=iso(new Date()); await regenWith({pantry:true, freezeBefore: weekDates(S.week).includes(t0)?t0:null}); toast("Semana rehecha con lo que tienes"); }
+      else { render(); toast(a==="clear-pantry"?"Despensa vaciada":"Guardado"); }
+      break; }
+    case "copy-shop": { const txt=S._shopText||""; try{ await navigator.clipboard.writeText(txt); toast("Lista copiada"); }catch(e){ openModal(`<h2>Lista de compra</h2><textarea rows="14" id="shop-copy">${esc(txt)}</textarea><div class="bar"><button class="btn" data-act="close-modal">Cerrar</button></div>`); const ta=$("#shop-copy"); ta.focus(); ta.select(); } break; }
+    case "save-settings": {
+      const st=settings(); const diners=st.diners;
+      const targets={}; ["carne","pescado","pazul","huevo","legumbre"].forEach(k=>targets[k]=[Number($("#st-t0-"+k).value)||0, Number($("#st-t1-"+k).value)||0]);
+      const ns={diners, adultFormat:$("#st-fmt").value, meriendaFor:$("#st-mer").value, noSchool:$("#st-nos").value, pizza:$("#st-pizza").value, targets, updated:Date.now()};
+      S.settings=ns; render(); if(await put("settings/main", ns)) toast("Ajustes guardados"); break; }
+  }
+});
+document.addEventListener("change", ev => {
+  const t=ev.target;
+  if(t.dataset.actChange==="ed-fmt"){ S.editing.fmt=t.value; render(); }
+  else if(t.id==="imp-file" && t.files && t.files[0]){ const f=t.files[0]; t.value=""; const rd=new FileReader(); rd.onload=async()=>{ let obj; try{ obj=JSON.parse(rd.result); }catch(e){ toast("Ese archivo no es un JSON válido."); return; } toast("Importando…"); const m=await importBackup(obj); render(); toast(m); }; rd.readAsText(f); }
+  else if(t.dataset.actChange==="tick"){ const tk=loadTicks(S.week); tk[t.dataset.k]=t.checked; saveTicks(S.week,tk); }
+  else if(t.id==="rf-h"){ S.recFilter.h=t.checked; render(); }
+  else if(t.id==="rf-a"){ S.recFilter.a=t.checked; render(); }
+  else if(["rf-meal","rf-course","rf-prot"].includes(t.id)){ S.recFilter[t.id.slice(3)]=t.value; render(); }
+});
+document.addEventListener("input", ev => {
+  const t=ev.target;
+  if(t.id==="rf-q"){ S.recFilter.q=t.value; clearTimeout(S._qT); S._qT=setTimeout(()=>{ const pos=t.selectionStart; render(); const n=$("#rf-q"); if(n){n.focus(); n.setSelectionRange(pos,pos);} },250); }
+  if(t.id==="imp-text") S._impText=t.value;
+  if(t.id==="imp-when") S._impWhen=t.value;
+});
+document.addEventListener("keydown", ev => { if(ev.key==="Escape" && $("#modal-root").innerHTML) closeModal(); });
+
+/* ---------- sugerencias de recetas con Claude ---------- */
+function aiModal(){
+  const props=S.aiProps;
+  openModal(`<div style="display:flex;justify-content:space-between;gap:10px"><h2>Sugerir recetas con Claude</h2><button class="btn icon ghost" data-act="close-modal" aria-label="Cerrar">✕</button></div>
+   <div class="frow"><label class="f">Qué necesitas<select id="ai-focus">
+     <option value="huecos">Cubrir huecos del recetario</option><option value="harvard">Platos completos tipo plato de Harvard</option>
+     <option value="cenas">Cenas ligeras y rápidas</option><option value="meriendas">Meriendas y snacks para la fiambrera</option><option value="libre">Otra cosa (descríbela)</option></select></label>
+   <label class="f">Cuántas<select id="ai-n"><option>3</option><option selected>5</option><option>8</option></select></label></div>
+   <label class="f">Detalles (opcional)<input type="text" id="ai-extra" placeholder="Ej.: con lo que hay en temporada, sin horno, para tupper…" value="${esc(S._aiExtra||"")}"></label>
+   <div class="bar"><button class="btn primary" data-act="ai-run" ${S.aiBusy?"disabled":""}>${S.aiBusy?"Pensando…":"Proponer"}</button></div>
+   ${props?`<div style="display:flex;flex-direction:column;gap:8px">${props.length?props.map((r,i)=>`<label class="prop" for="aip-${i}"><input type="checkbox" id="aip-${i}" checked><span class="grow"><b>${esc(r.name)}</b><br><span class="muted small">${COURSES[r.course]} · ${(PROT[r.protein]||PROT.ninguna).l} · ${(r.meals||[]).map(m=>MEALS[m]).join(", ")} · ≈${r.kcal} kcal${r.harvard?" · Plato Harvard":""}</span><br><span class="small">${esc((r.ingredients||[]).join(", "))}</span></span></label>`).join("")+`<div class="bar"><button class="btn primary" data-act="ai-add">Añadir seleccionadas</button></div>`:`<p class="muted">No ha devuelto recetas válidas. Prueba otra vez.</p>`}</div>`:""}`);
+}
+function recipeGaps(){
+  const out=[];
+  ["comida","cena"].forEach(m=>["carne","pblanco","pazul","huevo","legumbre"].forEach(p=>{ const n=recList().filter(r=>(r.meals||[]).includes(m)&&r.protein===p&&r.course!=="primero").length; if(n<3) out.push(`${MEALS[m].toLowerCase()} con ${PROT[p].l.toLowerCase()} (${n})`); }));
+  const prims=recList().filter(r=>(r.meals||[]).includes("cena")&&r.course==="primero"&&hasG(r,["cereal","patata"])).length; if(prims<4) out.push(`primeros de cena con cereal o patata (${prims})`);
+  return out;
+}
+async function aiRun(){
+  const focus=$("#ai-focus").value, n=Number($("#ai-n").value)||5, extra=($("#ai-extra").value||"").trim(); S._aiExtra=extra;
+  const focusTxt={huecos:`Prioriza estos huecos del recetario: ${recipeGaps().join("; ")||"ninguno; aporta variedad"}.`,
+    harvard:"Platos completos que sigan el plato de Harvard: medio plato de verdura, un cuarto de cereal integral y un cuarto de proteína saludable, con aceite de oliva.",
+    cenas:"Cenas ligeras, de menos de 25 minutos, a la plancha, horno o vapor.", meriendas:'Meriendas (course "merienda", meals ["merienda"]) variadas y equilibradas, sin azúcar añadido; todas pensadas para ir en una fiambrera al colegio (llevar: true): nada líquido salvo envasado individual (Actimel, yogur líquido, brik de leche, bolsita de compota), aguantan varias horas sin nevera, sin frutos secos, fáciles de comer con las manos. Se pueden usar productos envasados tipo Actimel, Babybel o queso en porciones; escribe esos ingredientes como «1 env nombre» (un envase por persona).', libre:""}[focus];
+  const prompt=`Eres dietista-nutricionista y cocinera de diario en España. Propón ${n} recetas nuevas, sencillas (máximo 7 ingredientes, menos de 40 minutos) para una familia de 2 adultos (hombre 1800 kcal, mujer 1600 kcal) y tres niñas de 5, 3 y 1 año que comen lo mismo.
+${focusTxt} ${extra}
+No repitas estas recetas existentes: ${recList().map(r=>r.name).join("; ")}.
+Reglas: cocinado con poca grasa (plancha, horno, vapor, guiso ligero); nada de pez espada, tiburón, atún rojo ni lucio; para la niña de 1 año, sin sal, textura adaptada y sin frutos secos enteros ni alimentos duros redondos.
+Devuelve SOLO JSON: {"recipes":[{"name":"","meals":["comida","cena"],"course":"primero|segundo|completo|merienda","protein":"carne|pblanco|pazul|huevo|legumbre|ninguna","groups":["verdura","cruda","cereal","patata","legumbre","lacteo","fruta"],"kcal":0,"ingredients":["150 g merluza","1 ud huevo"],"steps":"","kids":"","harvard":false,"llevar":false}]}
+- ingredients: cantidades POR RACIÓN DE UN ADULTO HOMBRE, una por elemento, formato «cantidad unidad nombre» (g, ml, ud, diente; «env» para productos envasados individuales, que cuentan uno por persona).
+- groups: solo los grupos de alimentos que aporta de forma relevante; "verdura" = verdura cocinada, "cruda" = hortaliza cruda.
+- kcal: estimación por ración del hombre.
+- kids: adaptación concreta para las niñas, sobre todo la de 1 año.
+- harvard: true solo si cumple el plato de Harvard.
+- llevar: solo en meriendas; true si sirve de snack para llevar al cole.`;
+  S.aiBusy=true; aiModal();
+  try{
+    const res=await S.sample.json(prompt,{modelTier:"default"});
+    const okC=Object.keys(COURSES), okP=Object.keys(PROT), okG=Object.keys(GROUPS), okM=Object.keys(MEALS);
+    S.aiProps=((res&&res.recipes)||[]).filter(r=>r&&r.name&&okC.includes(r.course)).map(r=>({
+      name:String(r.name).slice(0,120), course:r.course, protein:okP.includes(r.protein)?r.protein:"ninguna",
+      meals:(r.meals||[]).filter(m=>okM.includes(m)).length?(r.meals||[]).filter(m=>okM.includes(m)):(r.course==="merienda"?["merienda"]:["comida","cena"]),
+      groups:(r.groups||[]).filter(g=>okG.includes(g)), kcal:Math.round(Number(r.kcal)||0), ingredients:(r.ingredients||[]).map(String).slice(0,15),
+      steps:String(r.steps||""), kids:String(r.kids||""), harvard:!!r.harvard, llevar:r.course==="merienda"&&!!r.llevar }));
+  }catch(e){ const c=e&&e.code; toast(c==="not_granted"?"Has denegado el permiso para usar Claude en esta página.":c==="rate_limited"?"Demasiadas peticiones; espera un momento.":"No se pudieron generar recetas. Inténtalo de nuevo."); }
+  S.aiBusy=false; aiModal();
+}
+async function aiAdd(){
+  const sel=(S.aiProps||[]).filter((r,i)=>{ const c=$("#aip-"+i); return c&&c.checked; });
+  let n=0;
+  for(const r of sel){ const id="ai"+Date.now().toString(36)+Math.random().toString(36).slice(2,5); const rec={...r,id,link:"",updated:Date.now(),source:"claude"}; S.recipes[id]=rec; if(await put("recipes/"+id, rec)) n++; }
+  S.aiProps=null; closeModal(); render(); toast(`${n} receta${n===1?"":"s"} añadida${n===1?"":"s"}. Revisa cantidades y kcal.`);
+}
+
+/* ---------- aprendizaje y copia de seguridad ---------- */
+function findByName(name){ const n=norm(name); if(!n) return null; const L=recList(); return L.find(r=>norm(r.name)===n) || L.find(r=>{ const rn=norm(r.name); return rn.includes(n)||n.includes(rn); }) || null; }
+function mapTheirRecipe(r){
+  const g=r.grupo; const prot={legumbre:"legumbre",pescado:"pblanco",carne:"carne",huevo:"huevo"}[g]||"ninguna";
+  const groups=[]; if(g==="feculento") groups.push("cereal"); if(g==="legumbre") groups.push("legumbre"); if(r.vtipo==="cruda") groups.push("cruda"); if(r.vtipo==="cocida"||(g==="verdura"&&r.vtipo!=="cruda")) groups.push("verdura");
+  const meals=[]; if(r.comida!==false) meals.push("comida"); if(r.cena) meals.push("cena");
+  return {name:String(r.name), course:["primero","segundo","completo"].includes(r.plato)?r.plato:"completo", protein:prot, groups, meals:meals.length?meals:["comida"], kcal:0,
+    ingredients:(r.ingredients||[]).map(String), steps:"", kids:String(r.baby||""), link:/^https?:\/\//i.test(r.link||"")?r.link:"", harvard:false};
+}
+async function importBackup(obj){
+  let msg=[];
+  if(obj && obj.app==="menu-familiar"){
+    let n=0;
+    for(const [col,docs] of [["recipes",obj.recipes],["school",obj.school],["plans",obj.plans]]) for(const [id,doc] of Object.entries(docs||{})){ if(await put(col+"/"+id, doc)) n++; }
+    if(obj.settings) await put("settings/main", obj.settings); if(obj.pantry) await put("settings/pantry", obj.pantry); if(obj.knowledge) await put("settings/knowledge", obj.knowledge);
+    return `Copia restaurada: ${n} documentos.`;
+  }
+  const idMap={};
+  if(Array.isArray(obj&&obj.library)){
+    let added=0;
+    for(const r of obj.library){ if(!r||!r.name) continue; const ex=findByName(r.name); if(ex){ idMap[r.id]=ex.id; continue; }
+      const id="imp"+Date.now().toString(36)+Math.random().toString(36).slice(2,5); const rec={...mapTheirRecipe(r),id,updated:Date.now(),source:"importada"}; S.recipes[id]=rec; idMap[r.id]=id; if(await put("recipes/"+id, rec)) added++; }
+    msg.push(`${added} recetas nuevas (revisa proteína, grupos, cantidades y kcal)`);
+  }
+  if(Array.isArray(obj&&obj.pantry) && obj.pantry.length){ const items=[...new Set([...((S.pantry&&S.pantry.items)||[]), ...obj.pantry.map(String)])]; S.pantry={items,updated:Date.now()}; await put("settings/pantry", S.pantry); msg.push("despensa actualizada"); }
+  const K={freq:{...((S.knowledge||{}).freq||{})}, pair:{...((S.knowledge||{}).pair||{})}, meals:(S.knowledge||{}).meals||0}; let learned=0, unknown=0;
+  const learn = ids => { ids=ids.filter(Boolean); if(!ids.length) return; learned++; ids.forEach(id=>K.freq[id]=(K.freq[id]||0)+1); for(let i=0;i<ids.length;i++) for(let j=i+1;j<ids.length;j++){ const p=pairKey(ids[i],ids[j]); K.pair[p]=(K.pair[p]||0)+1; } };
+  const resolve = x => { if(typeof x==="string"){ const r=findByName(x); if(!r) unknown++; return r&&r.id; } return idMap[x]||null; };
+  if(obj&&obj.knowledge&&obj.knowledge.freq){ Object.entries(obj.knowledge.freq).forEach(([id,n])=>{ const m=idMap[id]; if(m) K.freq[m]=(K.freq[m]||0)+n; }); Object.entries(obj.knowledge.pair||{}).forEach(([k,n])=>{ const [a,b]=k.split("|"); if(idMap[a]&&idMap[b]){ const p=pairKey(idMap[a],idMap[b]); K.pair[p]=(K.pair[p]||0)+n; } }); K.meals+=obj.knowledge.meals||0; }
+  if(obj&&obj.plan&&typeof obj.plan==="object"&&!Array.isArray(obj.plan)) Object.values(obj.plan).forEach(sl=>{ if(sl&&sl.status!=="fuera") learn((sl.items||[]).map(x=>idMap[x]||null)); });
+  const menus = Array.isArray(obj&&obj.menus) ? obj.menus : (Array.isArray(obj)?obj:[]);
+  menus.forEach(d=>{ if(!d) return; ["comida","cena"].forEach(k=>{ if(Array.isArray(d[k])) learn(d[k].map(resolve)); }); if(Array.isArray(d.platos)) learn(d.platos.map(resolve)); });
+  if(learned || (obj&&obj.knowledge)){ S.knowledge={...K,updated:Date.now()}; await put("settings/knowledge", S.knowledge); msg.push(`aprendido de ${learned} comidas${unknown?` (${unknown} platos no reconocidos)`:""}`); }
+  return msg.length ? msg.join(" · ").replace(/^./,c=>c.toUpperCase())+"." : "No he reconocido nada que importar en ese archivo.";
+}
+async function exportBackup(){
+  const data={app:"menu-familiar", v:1, exported:new Date().toISOString(), recipes:S.recipes, school:S.school, plans:S.plans, settings:S.settings, pantry:S.pantry, knowledge:S.knowledge};
+  if(!S.downloads){ toast("La descarga no está disponible en esta vista."); return; }
+  try{ const r=await S.downloads.save({filename:`menu-familiar-${iso(new Date())}.json`, data:JSON.stringify(data,null,1)}); if(r&&r.status==="saved") toast("Copia guardada"); }
+  catch(e){ if(!(e&&e.code==="cancelled")) toast("No se pudo guardar la copia."); }
+}
+
+/* ---------- importación con Claude ---------- */
+async function doImport(){
+  const text=($("#imp-text").value||"").trim(); const when=($("#imp-when").value||"").trim();
+  const imgIn=$("#imp-img"); const img=imgIn&&imgIn.files&&imgIn.files[0];
+  if(!text && !img){ toast("Pega el texto del menú o sube una captura."); return; }
+  S.importing=true; render();
+  const prompt=`Eres un asistente que estructura menús de comedor escolar en España. Menú de: ${when}.
+Devuelve SOLO JSON con esta forma:
+{"days":[{"date":"YYYY-MM-DD","primero":"","segundo":"","guarnicion":"","postre":"","prot":["..."],"base":"","postreTipo":"","sug":""}]}
+Reglas:
+- Un elemento por día lectivo con menú. Fecha ISO con el año correcto.
+- prot: proteínas animales o legumbre del día, de entre "carne","pblanco" (merluza, abadejo, limanda, bacalao, gallo, rosada…),"pazul" (salmón, sardina, caballa, atún, bonito, boquerón),"huevo" (tortilla, revuelto),"legumbre". La PRIMERA debe ser la proteína del segundo plato. Añade la del primero si la tiene (p. ej. paella de carne → "carne"; lentejas → "legumbre").
+- base: grupo principal del primer plato: "cereal" (arroz, pasta, fideos, cuscús), "patata", "legumbre" o "verdura" (cremas, purés, verduras).
+- postreTipo: "fruta", "lacteo" (yogur, natillas, helado…) o "ambos" (fruta y yogur).
+- sug: solo si el texto incluye la cena recomendada por el cole para ese día, con el formato «Base · proteína · postre», p. ej. «Verduras cocinadas · pescado blanco · pan, fruta»; si no, "".
+- No inventes platos. Quita los códigos de alérgenos tipo C:(1,3) o PC:(...).
+${text?`Texto del menú:\n${text}`:"El menú está en la imagen adjunta."}`;
+  try{
+    const opts={modelTier:"default"}; if(img) opts.images=[img];
+    const res=await S.sample.json(prompt, opts);
+    const days=(res&&res.days)||[]; const valid=["carne","pblanco","pazul","huevo","legumbre"];
+    const byWeek={};
+    days.forEach(d=>{ if(!/^\d{4}-\d{2}-\d{2}$/.test(d.date||"")) return; const w=mondayOf(d.date);
+      byWeek[w]=byWeek[w]||{...(S.school[w]||{weekId:w,days:{}}), days:{...((S.school[w]||{}).days||{})}};
+      byWeek[w].days[d.date]={primero:String(d.primero||""),segundo:String(d.segundo||""),guarnicion:String(d.guarnicion||""),postre:String(d.postre||""),
+        sug:String(d.sug||""), prot:(d.prot||[]).filter(p=>valid.includes(p)), base:BASES[d.base]?d.base:"verdura", postreTipo:["fruta","lacteo","ambos"].includes(d.postreTipo)?d.postreTipo:"fruta"}; });
+    const ws=Object.keys(byWeek).sort();
+    if(!ws.length){ toast("No he encontrado días con fecha en el texto. Revisa el mes y el contenido."); }
+    else {
+      for(const w of ws){ byWeek[w].weekId=w; byWeek[w].updated=Date.now(); S.school[w]=byWeek[w]; await put("school/"+w, byWeek[w]); }
+      S._impText=""; S.week=ws[0]; toast(`Importados ${days.length} días en ${ws.length} semana${ws.length>1?"s":""}. Revisa la clasificación.`);
+    }
+  }catch(e){
+    const c=e&&e.code; toast(c==="not_granted"?"Has denegado el permiso para usar Claude en esta página.":c==="rate_limited"?"Demasiadas peticiones; espera un momento.":"No se pudo interpretar el menú. Prueba con menos texto o escríbelo a mano.");
+  }
+  S.importing=false; render();
+}
+
+/* ---------- arranque ---------- */
+S.week = mondayOf(iso(new Date()));
+render();
+function maybeAutoWeek(){
+  if(!S.weekAuto || !S.loaded.school) return;
+  S.weekAuto=false;
+  const cur=mondayOf(iso(new Date()));
+  if(!S.school[cur]){
+    const ws=Object.keys(S.school).sort().filter(w=>w<=cur);
+    if(!ws.length || settings().noSchool!=="pauta"){ if(ws.length){ S.week=ws[ws.length-1]; S.weekNotice=`No hay menú del cole para la semana del ${fmtShort(cur)}. Te muestro la última semana cargada.`; } }
+  }
+}
+(async () => {
+  const c=window.claude;
+  const db = c && c.use ? await c.use("db").catch(()=>null) : null;
+  if(!db){ S.dbState="none"; Object.keys(S.loaded).forEach(k=>S.loaded[k]=true); render(); }
+  else {
+    S.db=db; S.dbState="ok";
+    const err = () => { };
+    db.collection("recipes").onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]={...d.data(), id:d.id}; }); S.recipes=o; S.loaded.recipes=true; if(!$("#modal-root").innerHTML && !document.activeElement.matches("input,textarea,select")) render(); }, err);
+    db.collection("school").onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S.school=o; S.loaded.school=true; maybeAutoWeek(); if(!(S.tab==="cole" && document.activeElement.matches("input,textarea,select"))) render(); }, err);
+    db.collection("plans").onSnapshot(snap=>{ const o={}; snap.docs.forEach(d=>{ o[d.id]=d.data(); }); S.plans=o; S.loaded.plans=true; if(!S.editing) render(); }, err);
+    db.doc("settings/pantry").onSnapshot(snap=>{ S.pantry=snap.exists?snap.data():null; if(!(S.tab==="compra" && document.activeElement && document.activeElement.id==="pantry-text")) render(); }, err);
+    db.doc("settings/knowledge").onSnapshot(snap=>{ S.knowledge=snap.exists?snap.data():null; if(S.tab==="ajustes") render(); }, err);
+    db.doc("settings/main").onSnapshot(snap=>{ S.settings=snap.exists?snap.data():null; S.loaded.settings=true; if(S.tab!=="ajustes") render(); }, err);
+  }
+  const dl = c && c.use ? await c.use("downloads").catch(()=>null) : null; if(dl){ S.downloads=dl; if(S.tab==="ajustes") render(); }
+  const sample = c && c.use ? await c.use("sample").catch(()=>null) : null;
+  if(sample){ S.sample=sample; try{ const l=await sample.limits(); S.sampleImages=!!(l&&l.images); }catch(e){} if(S.tab==="cole") render(); }
+})();
+})();
+</script>
+
+
+</body>
+</html>
